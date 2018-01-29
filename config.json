@@ -1,0 +1,9 @@
+{
+    "software":{
+        "comet": {
+            "bin": "comet.2017013.linux.exe",
+            "conf": "res/conf/comet.params.txt"
+        }
+    },
+    "seq_db": "res/data/seq/gencode/gencode.v27.pc_translations.fa"
+}

@@ -1,0 +1,5 @@
+.snakemake
+log
+out
+*.swp
+res/data
