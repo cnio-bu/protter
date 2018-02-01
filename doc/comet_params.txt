@@ -1,0 +1,1 @@
+spectrum_batch_size=20000 => ~8GB RAM
