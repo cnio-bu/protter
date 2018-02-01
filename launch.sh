@@ -1,0 +1,1 @@
+snakemake -j 32
