@@ -6,7 +6,7 @@ decoy_search = 0                       # 0=no (default), 1=concatenated search, 
 #peff_format = 0                        # 0=no (normal fasta, default), 1=PEFF PSI-MOD, 2=PEFF Unimod
 #peff_obo =                             # path to PSI Mod or Unimod OBO file
 
-#um_threads = 0                        # 0=poll CPU to set num threads; else specify num threads directly (max 64)
+#num_threads = 0                        # 0=poll CPU to set num threads; else specify num threads directly (max 64)
 
 #
 # masses
@@ -93,7 +93,7 @@ max_fragment_charge = 3                # set maximum fragment charge state to an
 max_precursor_charge = 4               # set maximum precursor charge state to analyze (allowed max 9)
 nucleotide_reading_frame = 0           # 0=proteinDB, 1-6, 7=forward three, 8=reverse three, 9=all six
 clip_nterm_methionine = 1              # 0=leave sequences as-is; 1=also consider sequence w/o N-term methionine
-spectrum_batch_size = 0                # max. # of spectra to search at a time; 0 to search the entire scan range in one loop
+spectrum_batch_size = 20000                # max. # of spectra to search at a time; 0 to search the entire scan range in one loop
 decoy_prefix = decoy-                  # decoy entries are denoted by this string which is pre-pended to each protein accession
 output_suffix =                        # add a suffix to output base names i.e. suffix "-C" generates base-C.pep.xml from base.mzXML input
 mass_offsets =                         # one or more mass offsets to search (values substracted from deconvoluted precursor mass)
