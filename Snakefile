@@ -1,4 +1,5 @@
 import os,glob
+from tstk.io import parsefastx
 
 configfile: "config.yaml"
 
@@ -27,12 +28,23 @@ rule index_ML:
         msconvert {input.ML} --mzML -o out/index_ML > {log.o} 2> {log.e}
     """
 
+rule convert_leucines:
+    input:
+        db=lambda wc: config["dbs"][wc.db]["path"]
+    output:
+        db="out/{db}/convert_leucines/db.fasta"
+    run:
+        with open(input.db) as fh:
+            with open(output.db,"w") as ofh:
+                for r in parsefastx(fh):
+                    ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
+
 rule add_decoys:
     '''
         Use decyPYrat to add decoy sequences to the original database.
     '''
     input:
-        db=lambda wc: config["dbs"][wc.db]["path"]
+        db="out/{db}/convert_leucines/db.fasta"
     output:
         dec="out/{db}/add_decoys/decoys.fasta",
         dbd="out/{db}/add_decoys/db_and_decoys.fasta",
