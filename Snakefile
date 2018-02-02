@@ -1,13 +1,13 @@
 import os,glob
 
-configfile: "config.json"
+configfile: "config.yaml"
 
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        ["out/comet/{xp}.pep.xml".format(xp=os.path.splitext(os.path.basename(fname))[0]) for fname in glob.glob("res/data/raw/*.mzML")]
+        ["out/{db}/comet/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0]) for db in config["active_dbs"] for fname in glob.glob("res/data/raw/*.mzML")]
 
 rule index_ML:
     '''
@@ -32,13 +32,13 @@ rule add_decoys:
         Use decyPYrat to add decoy sequences to the original database.
     '''
     input:
-        db=config["seq_db"]
+        db=lambda wc: config["dbs"][wc.db]["path"]
     output:
-        dec="out/add_decoys/decoys.fasta",
-        dbd="out/add_decoys/db_with_decoys.fasta"
+        dec="out/{db}/add_decoys/decoys.fasta",
+        dbd="out/{db}/add_decoys/db_and_decoys.fasta",
     log:
-        o="log/add_decoys/add_decoys.out",
-        e="log/add_decoys/add_decoys.err"
+        o="log/{db}/add_decoys/{db}.out",
+        e="log/{db}/add_decoys/{db}.err"
     shell:"""
         python bin/decoyPYrat.py {input.db} -o {output.dec} --decoy_prefix decoy > {log.o} 2> {log.e}
         cat {input.db} {output.dec} >> {output.dbd} 2> {log.e}
@@ -51,12 +51,12 @@ rule comet:
     input:
         conf=config["software"]["comet"]["conf"],
         raw="out/index_ML/{xp}.mzML",
-        seq="out/add_decoys/db_with_decoys.fasta"
+        seq="out/{db}/add_decoys/db_and_decoys.fasta"
     output:
-        xml="out/comet/{xp}.pep.xml"
+        xml="out/{db}/comet/{xp}.pep.xml"
     log:
-        o="log/comet/{xp}.out",
-        e="log/comet/{xp}.err"
+        o="log/{db}/comet/{xp}.out",
+        e="log/{db}/comet/{xp}.err"
     params:
         bin="bin/comet/{}".format(config["software"]["comet"]["bin"]),
         basename=lambda wc: "out/comet/{xp}".format(xp=wc.xp)
