@@ -8,7 +8,7 @@ rule all:
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        ["out/{db}/comet/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0]) for db in config["active_dbs"] for fname in glob.glob("res/data/raw/*.mzML")]
+        ["out/dbs/{db}/comet/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0]) for db in config["active_dbs"] for fname in glob.glob("res/data/raw/*.mzML")]
 
 rule index_ML:
     '''
@@ -32,7 +32,7 @@ rule convert_leucines:
     input:
         db=lambda wc: config["dbs"][wc.db]["path"]
     output:
-        db="out/{db}/convert_leucines/db.fasta"
+        db="out/dbs/{db}/convert_leucines/db.fasta"
     run:
         with open(input.db) as fh:
             with open(output.db,"w") as ofh:
@@ -44,15 +44,17 @@ rule add_decoys:
         Use decyPYrat to add decoy sequences to the original database.
     '''
     input:
-        db="out/{db}/convert_leucines/db.fasta"
+        db="out/dbs/{db}/convert_leucines/db.fasta"
     output:
-        dec="out/{db}/add_decoys/decoys.fasta",
-        dbd="out/{db}/add_decoys/db_and_decoys.fasta",
+        dec="out/dbs/{db}/add_decoys/decoys.fasta",
+        dbd="out/dbs/{db}/add_decoys/db_and_decoys.fasta",
     log:
-        o="log/{db}/add_decoys/{db}.out",
-        e="log/{db}/add_decoys/{db}.err"
+        o="log/dbs/{db}/add_decoys/{db}.out",
+        e="log/dbs/{db}/add_decoys/{db}.err"
+    params:
+        tmp="out/dbs/{db}/add_decoys/decoyPYrat.tmp.fasta"
     shell:"""
-        python bin/decoyPYrat.py {input.db} -o {output.dec} --decoy_prefix decoy > {log.o} 2> {log.e}
+        python bin/decoyPYrat.py {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy > {log.o} 2> {log.e}
         cat {input.db} {output.dec} >> {output.dbd} 2> {log.e}
     """
 
@@ -63,12 +65,12 @@ rule comet:
     input:
         conf=config["software"]["comet"]["conf"],
         raw="out/index_ML/{xp}.mzML",
-        seq="out/{db}/add_decoys/db_and_decoys.fasta"
+        seq="out/dbs/{db}/add_decoys/db_and_decoys.fasta"
     output:
-        xml="out/{db}/comet/{xp}.pep.xml"
+        xml="out/dbs/{db}/comet/{xp}.pep.xml"
     log:
-        o="log/{db}/comet/{xp}.out",
-        e="log/{db}/comet/{xp}.err"
+        o="log/dbs/{db}/comet/{xp}.out",
+        e="log/dbs/{db}/comet/{xp}.err"
     params:
         bin="bin/comet/{}".format(config["software"]["comet"]["bin"]),
         basename=lambda wc: "out/comet/{xp}".format(xp=wc.xp)
