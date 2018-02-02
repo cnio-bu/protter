@@ -1,0 +1,31 @@
+active_dbs:
+    - GENCODEv27
+    - GENCODEv24
+
+dbs:
+    GENCODEv27:
+        path: res/data/seq/gencode/gencode.v27.pc_translations.fa
+    GENCODEv24:
+        path: res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
+
+software:
+    comet:
+        bin: comet.2017013.linux.exe
+        conf: res/conf/comet.params.txt
+        threads: 4
+    Lego:
+        java_opts: -Djava.util.logging.config.file=bin/Lego/logging.properties -Djava.awt.headless=true
+        jar: lib/EhuBio.jar
+        mem: 16000
+        score: LPM
+        use_pcm: True
+        fdr: REFINED
+        enzyme: TRYPSIN
+        miss_cle: 2
+        nterm: 2
+        use_dp: true
+        prefix: decoy-
+        min_pep_len: 7
+        max_pep_len: 70
+        features: true #these two replace the old USE_PCMS param: USE_PCMS=True => features = true and best_psm = false, or viceversa (they are exclusive)
+        best_psm: false
