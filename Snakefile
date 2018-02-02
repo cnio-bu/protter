@@ -3,10 +3,16 @@ import os,glob
 configfile: "config.json"
 
 rule all:
+    '''
+        Main rule, which requires as input the final output of the workflow.
+    '''
     input:
         ["out/comet/{xp}.pep.xml".format(xp=os.path.splitext(os.path.basename(fname))[0]) for fname in glob.glob("res/data/raw/*.mzML")]
 
 rule index_ML:
+    '''
+        Use msconvert to generate indexed versions of the original .mzML files.
+    '''
     input:
         ML="res/data/raw/{xp}.mzML",
     output:
@@ -22,19 +28,26 @@ rule index_ML:
     """
 
 rule add_decoys:
+    '''
+        Use decyPYrat to add decoy sequences to the original database.
+    '''
     input:
-        seq=config["seq_db"]
+        db=config["seq_db"]
     output:
-        seq="out/add_decoys/db_with_decoys.fasta"
+        dec="out/add_decoys/decoys.fasta",
+        dbd="out/add_decoys/db_with_decoys.fasta"
     log:
         o="log/add_decoys/add_decoys.out",
         e="log/add_decoys/add_decoys.err"
     shell:"""
-        python bin/decoyPYrat.py {input.seq} -o {output.seq} > {log.o} 2> {log.e}
-        cat {input.seq} >> {output.seq} 2> {log.e}
+        python bin/decoyPYrat.py {input.db} -o {output.dec} --decoy_prefix decoy > {log.o} 2> {log.e}
+        cat {input.db} {output.dec} >> {output.dbd} 2> {log.e}
     """
 
 rule comet:
+    '''
+        Run comet on the files against the "decoyed" database.
+    '''
     input:
         conf=config["software"]["comet"]["conf"],
         raw="out/index_ML/{xp}.mzML",
