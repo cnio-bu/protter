@@ -73,7 +73,7 @@ rule comet:
         e="log/dbs/{db}/comet/{xp}.err"
     params:
         bin="bin/comet/{}".format(config["software"]["comet"]["bin"]),
-        basename=lambda wc: "out/comet/{xp}".format(xp=wc.xp)
+        basename=lambda wc: "out/dbs/{db}/comet/{xp}".format(db=wc.db,xp=wc.xp)
     threads: config["software"]["comet"]["threads"]
     resources:
         mem = 8000
