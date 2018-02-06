@@ -8,31 +8,50 @@ rule all:
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        ["out/dbs/{db}/comet/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0]) for db in config["active_dbs"] for fname in glob.glob("res/data/raw/*.mzML")]
+        ["out/{db}/comet/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0]) for db in config["active_dbs"] for fname in glob.glob("res/data/raw/*.mzML")],
+        ["out/common/raw/{xp}.mgf".format(xp=os.path.splitext(os.path.basename(fname))[0]) for fname in glob.glob("res/data/raw/*.mzML")]
 
-rule index_ML:
+rule index_mzML:
     '''
         Use msconvert to generate indexed versions of the original .mzML files.
     '''
     input:
         ML="res/data/raw/{xp}.mzML",
     output:
-        ML="out/index_ML/{xp}.mzML"
+        ML="out/common/raw/{xp}.mzML"
     log:
-        o="log/index_ML/{xp}.out",
-        e="log/index_ML/{xp}.err"
+        o="log/index_mzML/{xp}.out",
+        e="log/index_mzML/{xp}.err"
     threads: 1
     resources:
         mem = 1000
     shell:"""
-        msconvert {input.ML} --mzML -o out/index_ML > {log.o} 2> {log.e}
+        msconvert {input.ML} --mzML -o out/common/raw > {log.o} 2> {log.e}
+    """
+
+rule convert_mgf:
+    '''
+        Use msconvert to convert mzML files to mgf (for X!Tandem).
+    '''
+    input:
+        ML="res/data/raw/{xp}.mzML",
+    output:
+        ML="out/common/raw/{xp}.mgf"
+    log:
+        o="log/convert_mgf/{xp}.out",
+        e="log/convert_mgf/{xp}.err"
+    threads: 1
+    resources:
+        mem = 1000
+    shell:"""
+        msconvert {input.ML} --mgf -o out/common/raw > {log.o} 2> {log.e}
     """
 
 rule convert_leucines:
     input:
         db=lambda wc: config["dbs"][wc.db]["path"]
     output:
-        db="out/dbs/{db}/convert_leucines/db.fasta"
+        db="out/{db}/db/db.fasta"
     run:
         with open(input.db) as fh:
             with open(output.db,"w") as ofh:
@@ -44,15 +63,15 @@ rule add_decoys:
         Use decyPYrat to add decoy sequences to the original database.
     '''
     input:
-        db="out/dbs/{db}/convert_leucines/db.fasta"
+        db="out/{db}/db/db.fasta"
     output:
-        dec="out/dbs/{db}/add_decoys/decoys.fasta",
-        dbd="out/dbs/{db}/add_decoys/db_and_decoys.fasta",
+        dec="out/{db}/db/decoys.fasta",
+        dbd="out/{db}/db/db_and_decoys.fasta",
     log:
-        o="log/dbs/{db}/add_decoys/{db}.out",
-        e="log/dbs/{db}/add_decoys/{db}.err"
+        o="log/add_decoys/{db}.out",
+        e="log/add_decoys/{db}.err"
     params:
-        tmp="out/dbs/{db}/add_decoys/decoyPYrat.tmp.fasta"
+        tmp="out/{db}/db/decoyPYrat.tmp.fasta"
     shell:"""
         python bin/decoyPYrat.py {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy > {log.o} 2> {log.e}
         cat {input.db} {output.dec} >> {output.dbd} 2> {log.e}
@@ -64,20 +83,20 @@ rule comet:
     '''
     input:
         conf=config["software"]["comet"]["conf"],
-        raw="out/index_ML/{xp}.mzML",
-        seq="out/dbs/{db}/add_decoys/db_and_decoys.fasta"
+        raw="out/common/raw/{xp}.mzML",
+        db="out/{db}/db/db_and_decoys.fasta",
     output:
-        xml="out/dbs/{db}/comet/{xp}.pep.xml"
+        xml="out/{db}/comet/{xp}.pep.xml"
     log:
-        o="log/dbs/{db}/comet/{xp}.out",
-        e="log/dbs/{db}/comet/{xp}.err"
+        o="log/{db}/comet/{xp}.out",
+        e="log/{db}/comet/{xp}.err"
     params:
         bin="bin/comet/{}".format(config["software"]["comet"]["bin"]),
-        basename=lambda wc: "out/dbs/{db}/comet/{xp}".format(db=wc.db,xp=wc.xp)
+        basename=lambda wc: "out/{db}/comet/{xp}".format(db=wc.db,xp=wc.xp)
     threads: config["software"]["comet"]["threads"]
     resources:
         mem = 8000
     shell:"""
         export NSLOTS={threads}
-        {params.bin} -P{input.conf} -D{input.seq} -N{params.basename} {input.raw} > {log.o} 2> {log.e}
+        {params.bin} -P{input.conf} -D{input.db} -N{params.basename} {input.raw} > {log.o} 2> {log.e}
     """
