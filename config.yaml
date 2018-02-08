@@ -5,14 +5,27 @@ active_dbs:
 dbs:
     GENCODEv27:
         path: res/data/seq/gencode/gencode.v27.pc_translations.fa
+        tax: human
     GENCODEv24:
         path: res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
+        tax: human
+
+datasets:
+    wei_2016:
+        enabled: True
+    kim_2014:
+        enabled: True
 
 software:
     comet:
-        bin: comet.2017013.linux.exe
-        conf: res/conf/comet.params.txt
+        bin: bin/comet/comet.2017013.linux.exe
+        params: res/conf/comet/comet.params.txt
         threads: 4
+    xtandem:
+        bin: bin/xtandem/bin/tandem.exe
+        params: res/confg/xtandem/xtandem.params.xml
+        taxonomy: res/confg/xtandem/xtandem.taxonomy.xml
+        threads: 1
     Lego:
         java_opts: -Djava.util.logging.config.file=bin/Lego/logging.properties -Djava.awt.headless=true
         jar: lib/EhuBio.jar
