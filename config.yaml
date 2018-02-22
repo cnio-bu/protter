@@ -23,8 +23,8 @@ software:
         threads: 4
     xtandem:
         bin: bin/xtandem/bin/tandem.exe
-        params: res/confg/xtandem/xtandem.params.xml
-        taxonomy: res/confg/xtandem/xtandem.taxonomy.xml
+        params: res/conf/xtandem/xtandem.params.xml
+        taxonomy: res/conf/xtandem/xtandem.taxonomy.xml
         threads: 4
     Lego:
         java_opts: -Djava.util.logging.config.file=bin/Lego/logging.properties -Djava.awt.headless=true

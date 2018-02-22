@@ -88,7 +88,7 @@ rule xtandem:
         tax="out/{db}/db/xtandem.taxonomy.xml"
     output:
         xml="out/{db}/xtandem/{ds}/{xp}.xml",
-        conf="out/{db}/xtandem/{ds}/{xp}.conf.xml"
+        conf="out/{db}/xtandem/{ds}_conf/{xp}.xml"
     log:
         o="log/{db}/xtandem/{ds}/{xp}.out",
         e="log/{db}/xtandem/{ds}/{xp}.err"
@@ -96,10 +96,13 @@ rule xtandem:
         bin=config["software"]["xtandem"]["bin"],
         params=config["software"]["xtandem"]["params"],
         tax=config["software"]["xtandem"]["taxonomy"],
+        basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}".format(db=wc.db,ds=wc.ds,xp=wc.xp)
     threads: config["software"]["xtandem"]["threads"]
     resources:
         mem = 8000
     run:
+        shell("rm -f {params.basename}*.xml")
+
         tree = ET.parse("res/conf/xtandem/xtandem.input_template.xml")
         root = tree.getroot()
 
@@ -123,3 +126,4 @@ rule xtandem:
         tree.write(output.conf, xml_declaration=True)
 
         shell("{params.bin} {output.conf} > {log.o} 2> {log.e}")
+        shell("mv {params.basename}*.xml {output.xml}")
