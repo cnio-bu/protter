@@ -9,8 +9,8 @@ rule all:
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        ["out/{db}/comet/{ds}/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
-        ["out/{db}/xtandem/{ds}/{xp}.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
+        ["out/{db}/comet/{ds}/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["comet"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
+        ["out/{db}/xtandem/{ds}/{xp}.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
 
 rule convert_leucines:
     input:
@@ -56,7 +56,7 @@ rule comet:
         e="log/{db}/comet/{ds}/{xp}.err"
     params:
         bin=config["software"]["comet"]["bin"],
-        params=config["software"]["comet"]["params"],
+        params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds),
         basename=lambda wc: "out/{db}/comet/{ds}/{xp}".format(db=wc.db,xp=wc.xp,ds=wc.ds)
     threads: config["software"]["comet"]["threads"]
     resources:
@@ -94,8 +94,7 @@ rule xtandem:
         e="log/{db}/xtandem/{ds}/{xp}.err"
     params:
         bin=config["software"]["xtandem"]["bin"],
-        params=config["software"]["xtandem"]["params"],
-        tax=config["software"]["xtandem"]["taxonomy"],
+        params=lambda wc: config["software"]["xtandem"]["params"].format(ds=wc.ds),
         basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}".format(db=wc.db,ds=wc.ds,xp=wc.xp)
     threads: config["software"]["xtandem"]["threads"]
     resources:

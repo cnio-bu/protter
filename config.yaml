@@ -19,13 +19,14 @@ datasets:
 software:
     comet:
         bin: bin/comet/comet.2017013.linux.exe
-        params: res/conf/comet/comet.params.txt
+        params: res/conf/comet/comet.params.{ds}.conf
         threads: 4
+        enabled: True
     xtandem:
         bin: bin/xtandem/bin/tandem.exe
-        params: res/conf/xtandem/xtandem.params.xml
-        taxonomy: res/conf/xtandem/xtandem.taxonomy.xml
+        params: res/conf/xtandem/xtandem.params.{ds}.xml
         threads: 4
+        enabled: False
     Lego:
         java_opts: -Djava.util.logging.config.file=bin/Lego/logging.properties -Djava.awt.headless=true
         jar: lib/EhuBio.jar
@@ -37,7 +38,7 @@ software:
         miss_cle: 2
         nterm: 2
         use_dp: true
-        prefix: decoy-
+        prefix: decoy_
         min_pep_len: 7
         max_pep_len: 70
         features: true #these two replace the old USE_PCMS param: USE_PCMS=True => features = true and best_psm = false, or viceversa (they are exclusive)
