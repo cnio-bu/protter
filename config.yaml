@@ -11,8 +11,10 @@ dbs:
         tax: human
 
 datasets:
-    wei_2016:
+    sabido:
         enabled: True
+    wei_2016:
+        enabled: False
     kim_2014:
         enabled: True
 
@@ -26,7 +28,7 @@ software:
         bin: bin/xtandem/bin/tandem.exe
         params: res/conf/xtandem/xtandem.params.{ds}.xml
         threads: 4
-        enabled: False
+        enabled: True
     Lego:
         java_opts: -Djava.util.logging.config.file=bin/Lego/logging.properties -Djava.awt.headless=true
         jar: lib/EhuBio.jar
