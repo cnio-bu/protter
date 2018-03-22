@@ -20,8 +20,8 @@ rule all:
     input:
         input_files("comet","mzML","pep.xml"),
         input_files("comet","raw","pep.xml"),
-        input_files("xtandem","mgf","t.xml"),
-        input_files("xtandem","raw","t.xml")
+        input_files("xtandem","mgf","pep.xml"),
+        input_files("xtandem","raw","pep.xml")
 
 rule convert_leucines:
     input:
@@ -162,6 +162,25 @@ rule xtandem:
         shell("{params.bin} {output.conf} > {log.o} 2> {log.e}")
         shell("mv {params.basename}*.xml {output.xml}")
 
+rule xtandem2pepxml:
+    '''
+        Convert t.xml files to pep.xml
+    '''
+    input:
+        txml="out/{db}/xtandem/{ds}/{sdb}/{xp}.t.xml",
+    output:
+        pepxml="out/{db}/xtandem/{ds}/{sdb}/{xp}.pep.xml",
+    log:
+        o="log/{db}/xtandem2pepxml/{ds}/{sdb}/{xp}.out",
+        e="log/{db}/xtandem2pepxml/{ds}/{sdb}/{xp}.err"
+    params:
+    threads: 1
+    resources:
+        mem = 4000
+    shell:'''
+        pepxmltk.py {input.txml} {output.pepxml}   
+    '''
+
 rule xtandem_group:
     '''
         Check that all xtandem output files are ready and write a flag
@@ -170,58 +189,3 @@ rule xtandem_group:
         ["out/{db}/xtandem/{ds}/{xp}.t.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
     output:
         touch("out/{db}/xtandem/{ds}.done")
-'''
-rule LegoParser:
-    input:
-        flag="out/{db}/xtandem/{ds}.done",
-        d="out/{db}/xtandem/{ds}"
-    output:
-        xml="out/{db}/xtandem/{ds}/{xp}.xml",
-        conf="out/{db}/xtandem/{ds}_conf/{xp}.xml"
-    log:
-        o="log/{db}/xtandem/{ds}/{xp}.out",
-        e="log/{db}/xtandem/{ds}/{xp}.err"
-    params:
-        bin=config["software"]["xtandem"]["bin"],
-        params=lambda wc: config["software"]["xtandem"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}".format(db=wc.db,ds=wc.ds,xp=wc.xp)
-    threads: config["software"]["xtandem"]["threads"]
-    resources:
-        mem = 8000
-    run:
-
-
-cfg = config["software"]["Lego"]
-
-Java -cp cfg["jar"] "-Xmx{}m".format(params.mem) cfg["java_opts"]
-
-org.sphpp.workflow.module.Parser --input /local/tdidomenico/projects/prot/bin/Lego/tmp/target_data --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmTarget.tsv.gz
-org.sphpp.workflow.module.Parser --input /local/tdidomenico/projects/prot/bin/Lego/tmp/decoy_data --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmDecoy.tsv.gz
-org.sphpp.workflow.module.Competitor --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmDecoy.tsv.gz
-org.sphpp.workflow.module.PsmFilter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmTarget.tsv.gz --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmTarget.tsv.gz --outputPep /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Seq2PepTarget.tsv.gz --relations /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Psm2PepTarget.tsv.gz --rank 1 --bestPsm true
-org.sphpp.workflow.module.Competitor --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmDecoy.tsv.gz
-org.sphpp.workflow.module.PsmFilter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmDecoy.tsv.gz --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmDecoy.tsv.gz --outputPep /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Seq2PepDecoy.tsv.gz --relations /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Psm2PepDecoy.tsv.gz --rank 1 --bestPsm true
-org.sphpp.workflow.module.LPCalculator --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmDecoy.tsv.gz
-org.sphpp.workflow.module.LPCalculator --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmDecoy.tsv.gz
-org.sphpp.workflow.module.RankPlotter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmDecoy
-org.sphpp.workflow.module.PsmFilter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmTarget.tsv.gz --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmTarget.tsv.gz --outputPep /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Seq2PepTarget.tsv.gz --relations /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Psm2PepTarget.tsv.gz --rank 1 --bestPsm true
-org.sphpp.workflow.module.Integrator --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmTarget.tsv.gz --relations /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Psm2PepTarget.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepTarget.tsv.gz
-org.sphpp.workflow.module.PsmFilter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/CompPsmDecoy.tsv.gz --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FilterPsmDecoy.tsv.gz --outputPep /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Seq2PepDecoy.tsv.gz --relations /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Psm2PepDecoy.tsv.gz --rank 1 --bestPsm true
-org.sphpp.workflow.module.Integrator --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPsmDecoy.tsv.gz --relations /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Psm2PepDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepDecoy.tsv.gz
-org.sphpp.workflow.module.FdrCalculator --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FdrPepTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FdrPepDecoy.tsv.gz
-org.sphpp.workflow.module.FdrCalculator --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FdrPepTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FdrPepDecoy.tsv.gz
-org.sphpp.workflow.module.RankPlotter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepDecoy
-org.sphpp.workflow.module.Digester --fasta /local/tdidomenico/projects/prot/bin/Lego/tmp/db/target.fasta --output /Seq2ProtTarget.tsv.gz --enzyme TRYPSIN --missed 2 --nterm 2 --dp true --minPepLen 7 --maxPepLen 70
-org.sphpp.workflow.module.PepRelator --relations /Seq2ProtTarget.tsv.gz --peptides /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepTarget.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2ProtTarget.tsv.gz
-org.sphpp.workflow.module.Digester --fasta /local/tdidomenico/projects/prot/bin/Lego/tmp/db/decoy.fasta --output /Seq2ProtDecoy.tsv.gz --enzyme TRYPSIN --missed 2 --nterm 2 --dp true --minPepLen 7 --maxPepLen 70
-org.sphpp.workflow.module.PepRelator --relations /Seq2ProtDecoy.tsv.gz --peptides /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPPepDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2ProtDecoy.tsv.gz
-org.sphpp.workflow.module.Relator --upper /local/tdidomenico/projects/prot/bin/Lego/data/Prot2Gencode25.tsv.gz --lower /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2ProtTarget.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2GenTarget.tsv.gz
-org.sphpp.workflow.module.Uniquer --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2GenTarget.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/UPep2GenTarget.tsv.gz
-org.sphpp.workflow.module.ExtCorrector --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FdrPepTarget.tsv.gz -r /local/tdidomenico/projects/prot/bin/Lego/tmp/results/UPep2GenTarget.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenTarget.tsv.gz --mode LPM
-org.sphpp.workflow.module.Relator --upper /local/tdidomenico/projects/prot/bin/Lego/data/Prot2Gencode25.tsv.gz --upperPrefix decoy- --lower /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2ProtDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2GenDecoy.tsv.gz
-org.sphpp.workflow.module.Uniquer --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/Pep2GenDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/UPep2GenDecoy.tsv.gz
-org.sphpp.workflow.module.ExtCorrector --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/FdrPepDecoy.tsv.gz -r /local/tdidomenico/projects/prot/bin/Lego/tmp/results/UPep2GenDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenDecoy.tsv.gz --mode LPM
-org.sphpp.workflow.module.FdrCalculator --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/FdrGenTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/FdrGenDecoy.tsv.gz --type REFINED --decoyPrefix decoy-
-org.sphpp.workflow.module.FdrCalculator --inTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenTarget.tsv.gz --inDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenDecoy.tsv.gz --outTarget /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/FdrGenTarget.tsv.gz --outDecoy /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/FdrGenDecoy.tsv.gz --type REFINED --decoyPrefix decoy-
-org.sphpp.workflow.module.RankPlotter --input /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenDecoy.tsv.gz --output /local/tdidomenico/projects/prot/bin/Lego/tmp/results/LPM-FDRr/LPCorrGenDecoy
-'''
