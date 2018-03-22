@@ -21,7 +21,7 @@ def input_percolator():
                 for ds in config["datasets"]:
                     if config["datasets"][ds]["enabled"]:
                         for db in config["active_dbs"]:
-                            for fname in glob.glob("res/data/prot/{iftype}/{ds}/Adult_Colon_bRP_Elite_50*.{iftype}".format(ds=ds,iftype=iftype)):
+                            for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
                                 yield "out/{db}/percolator/{sw}/{ds}/{xp}/percolator.target.proteins.txt".format(sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds)
 
 rule all:
@@ -210,7 +210,7 @@ rule percolator:
     resources:
         mem = 8000
     shell:'''
-        bin/crux/crux percolator --overwrite --output-dir {output.d} {input.target} > {log.o} 2> {log.e}
+        bin/crux/crux percolator --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} {input.target} > {log.o} 2> {log.e}
     '''
 
 rule xtandem_group:
