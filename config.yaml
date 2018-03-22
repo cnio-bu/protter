@@ -25,29 +25,16 @@ datasets:
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
 
 software:
-    comet:
-        bin: bin/comet/comet.2017013.linux.exe
-        params: res/conf/comet/comet.params.{ds}.conf
-        threads: 4
-        enabled: True
-    xtandem:
-        bin: bin/xtandem/bin/tandem.exe
-        params: res/conf/xtandem/xtandem.params.{ds}.xml
-        threads: 4
-        enabled: True
-    Lego:
-        java_opts: -Djava.util.logging.config.file=bin/Lego/logging.properties -Djava.awt.headless=true
-        jar: lib/EhuBio.jar
-        mem: 16000
-        score: LPM
-        use_pcm: True
-        fdr: REFINED
-        enzyme: TRYPSIN
-        miss_cle: 2
-        nterm: 2
-        use_dp: true
-        prefix: decoy_
-        min_pep_len: 7
-        max_pep_len: 70
-        features: true #these two replace the old USE_PCMS param: USE_PCMS=True => features = true and best_psm = false, or viceversa (they are exclusive)
-        best_psm: false
+    search:
+        comet:
+            bin: bin/comet/comet.2017013.linux.exe
+            params: res/conf/comet/comet.params.{ds}.conf
+            threads: 4
+            enabled: True
+            iftype: mzML
+        xtandem:
+            bin: bin/xtandem/bin/tandem.exe
+            params: res/conf/xtandem/xtandem.params.{ds}.xml
+            threads: 4
+            enabled: True
+            iftype: mgf

@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 configfile: "config.yaml"
 
-def input_files(software,iftype,oftype):
+def input_searches(software,iftype,oftype):
     if config["software"][software]["enabled"]:
         for ds in config["datasets"]:
             if config["datasets"][ds]["enabled"]:
@@ -13,15 +13,27 @@ def input_files(software,iftype,oftype):
                         #for td in ['db','decoys','target_and_decoys']:
                         for td in ['target','decoy']:
                             yield "out/{db}/{sw}/{ds}/{xp}.{td}.{oftype}".format(td=td,sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds,oftype=oftype)
+
+def input_percolator():
+    for software in config["software"]["search"]:
+        if config["software"]["search"][software]["enabled"]:
+            for iftype in [config["software"]["search"][software]["iftype"],'raw']:
+                for ds in config["datasets"]:
+                    if config["datasets"][ds]["enabled"]:
+                        for db in config["active_dbs"]:
+                            for fname in glob.glob("res/data/prot/{iftype}/{ds}/Adult_Colon_bRP_Elite_50*.{iftype}".format(ds=ds,iftype=iftype)):
+                                yield "out/{db}/percolator/{sw}/{ds}/{xp}/percolator.target.proteins.txt".format(sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds)
+
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        input_files("comet","mzML","pep.xml"),
-        input_files("comet","raw","pep.xml"),
-        input_files("xtandem","mgf","pep.xml"),
-        input_files("xtandem","raw","pep.xml")
+        input_percolator()
+        #input_searches("comet","mzML","pep.xml"),
+        #input_searches("comet","raw","pep.xml"),
+        #input_searches("xtandem","mgf","pep.xml"),
+        #input_searches("xtandem","raw","pep.xml")
 
 rule convert_leucines:
     input:
@@ -90,10 +102,10 @@ rule comet:
         o="log/{db}/comet/{ds}/{xp}.{td}.out",
         e="log/{db}/comet/{ds}/{xp}.{td}.err"
     params:
-        bin=config["software"]["comet"]["bin"],
-        params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds),
+        bin=config["software"]["search"]["comet"]["bin"],
+        params=lambda wc: config["software"]["search"]["comet"]["params"].format(ds=wc.ds),
         basename=lambda wc: "out/{db}/comet/{ds}/{xp}.{td}".format(db=wc.db,xp=wc.xp,ds=wc.ds,td=wc.td)
-    threads: config["software"]["comet"]["threads"]
+    threads: config["software"]["search"]["comet"]["threads"]
     resources:
         mem = 8000
     shell:"""
@@ -128,10 +140,10 @@ rule xtandem:
         o="log/{db}/xtandem/{ds}/{xp}.{td}.out",
         e="log/{db}/xtandem/{ds}/{xp}.{td}.err"
     params:
-        bin=config["software"]["xtandem"]["bin"],
-        params=lambda wc: config["software"]["xtandem"]["params"].format(ds=wc.ds),
+        bin=config["software"]["search"]["xtandem"]["bin"],
+        params=lambda wc: config["software"]["search"]["xtandem"]["params"].format(ds=wc.ds),
         basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}.{td}".format(db=wc.db,ds=wc.ds,xp=wc.xp,td=wc.td)
-    threads: config["software"]["xtandem"]["threads"]
+    threads: config["software"]["search"]["xtandem"]["threads"]
     resources:
         mem = 8000
     run:
@@ -181,11 +193,31 @@ rule xtandem2pepxml:
         pepxmltk.py {input.txml} {output.pepxml}   
     '''
 
+rule percolator:
+    '''
+        Run the crux percolator agorithm to separate target from decoy matches.
+    '''
+    input:
+        target="out/{db}/{sw}/{ds}/{xp}.target.pep.xml",
+        decoy="out/{db}/{sw}/{ds}/{xp}.decoy.pep.xml"
+    output:
+        d="out/{db}/percolator/{sw}/{ds}/{xp}",
+        f="out/{db}/percolator/{sw}/{ds}/{xp}/percolator.target.proteins.txt"
+    log:
+        o="log/{db}/percolator/{sw}/{ds}/{xp}.out",
+        e="log/{db}/percolator/{sw}/{ds}/{xp}.err"
+    threads: 1
+    resources:
+        mem = 8000
+    shell:'''
+        bin/crux/crux percolator --overwrite --output-dir {output.d} {input.target} > {log.o} 2> {log.e}
+    '''
+
 rule xtandem_group:
     '''
         Check that all xtandem output files are ready and write a flag
     '''
     input:
-        ["out/{db}/xtandem/{ds}/{xp}.t.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
+        ["out/{db}/xtandem/{ds}/{xp}.t.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["search"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
     output:
         touch("out/{db}/xtandem/{ds}.done")
