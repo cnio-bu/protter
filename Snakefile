@@ -10,9 +10,9 @@ def input_files(software,iftype,oftype):
             if config["datasets"][ds]["enabled"]:
                 for db in config["active_dbs"]:
                     for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
-                        #for sdb in ['db','decoys','db_and_decoys']:
-                        for sdb in ['db','decoys']:
-                            yield "out/{db}/{sw}/{ds}/{sdb}/{xp}.{oftype}".format(sdb=sdb,sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds,oftype=oftype)
+                        #for td in ['db','decoys','target_and_decoys']:
+                        for td in ['target','decoy']:
+                            yield "out/{db}/{sw}/{ds}/{xp}.{td}.{oftype}".format(td=td,sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds,oftype=oftype)
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
@@ -27,7 +27,7 @@ rule convert_leucines:
     input:
         db=lambda wc: config["dbs"][wc.db]["path"]
     output:
-        db="out/{db}/db/db.fasta"
+        db="out/{db}/db/target.fasta"
     run:
         with open(input.db) as fh:
             with open(output.db,"w") as ofh:
@@ -63,10 +63,10 @@ rule add_decoys:
         Use decoPYrat to add decoy sequences to the original database.
     '''
     input:
-        db="out/{db}/db/db.fasta"
+        db="out/{db}/db/target.fasta"
     output:
-        dec="out/{db}/db/decoys.fasta",
-        dbd="out/{db}/db/db_and_decoys.fasta",
+        dec="out/{db}/db/decoy.fasta",
+        dbd="out/{db}/db/target_and_decoy.fasta",
     log:
         o="log/add_decoys/{db}.out",
         e="log/add_decoys/{db}.err"
@@ -83,16 +83,16 @@ rule comet:
     '''
     input:
         data="res/data/prot/mzML/{ds}/{xp}.mzML",
-        db="out/{db}/db/{sdb}.fasta",
+        db="out/{db}/db/{td}.fasta",
     output:
-        xml="out/{db}/comet/{ds}/{sdb}/{xp}.pep.xml"
+        xml="out/{db}/comet/{ds}/{xp}.{td}.pep.xml"
     log:
-        o="log/{db}/comet/{ds}/{sdb}/{xp}.out",
-        e="log/{db}/comet/{ds}/{sdb}/{xp}.err"
+        o="log/{db}/comet/{ds}/{xp}.{td}.out",
+        e="log/{db}/comet/{ds}/{xp}.{td}.err"
     params:
         bin=config["software"]["comet"]["bin"],
         params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/comet/{ds}/{sdb}/{xp}".format(db=wc.db,xp=wc.xp,ds=wc.ds,sdb=wc.sdb)
+        basename=lambda wc: "out/{db}/comet/{ds}/{xp}.{td}".format(db=wc.db,xp=wc.xp,ds=wc.ds,td=wc.td)
     threads: config["software"]["comet"]["threads"]
     resources:
         mem = 8000
@@ -103,9 +103,9 @@ rule comet:
 
 rule xtandem_taxonomy:
     input:
-        db="out/{db}/db/{sdb}.fasta"
+        db="out/{db}/db/{td}.fasta"
     output:
-        tax="out/{db}/xtandem/taxonomy/{sdb}.xtandem.taxonomy.xml"
+        tax="out/{db}/xtandem/taxonomy/{td}.xtandem.taxonomy.xml"
     run:
         root = ET.Element("biomla", label="x! taxon-to-file matching list")
         taxon = ET.SubElement(root,"taxon", label=config["dbs"][wildcards.db]["tax"])
@@ -120,17 +120,17 @@ rule xtandem:
     '''
     input:
         data="res/data/prot/mgf/{ds}/{xp}.mgf",
-        tax="out/{db}/xtandem/taxonomy/{sdb}.xtandem.taxonomy.xml"
+        tax="out/{db}/xtandem/taxonomy/{td}.xtandem.taxonomy.xml"
     output:
-        xml="out/{db}/xtandem/{ds}/{sdb}/{xp}.t.xml",
-        conf="out/{db}/xtandem/{ds}_conf/{sdb}/{xp}.xml"
+        xml="out/{db}/xtandem/{ds}/{xp}.{td}.t.xml",
+        conf="out/{db}/xtandem/{ds}_conf/{xp}.{td}.xml"
     log:
-        o="log/{db}/xtandem/{ds}/{sdb}/{xp}.out",
-        e="log/{db}/xtandem/{ds}/{sdb}/{xp}.err"
+        o="log/{db}/xtandem/{ds}/{xp}.{td}.out",
+        e="log/{db}/xtandem/{ds}/{xp}.{td}.err"
     params:
         bin=config["software"]["xtandem"]["bin"],
         params=lambda wc: config["software"]["xtandem"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/xtandem/{ds}/{sdb}/{xp}".format(db=wc.db,ds=wc.ds,xp=wc.xp,sdb=wc.sdb)
+        basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}.{td}".format(db=wc.db,ds=wc.ds,xp=wc.xp,td=wc.td)
     threads: config["software"]["xtandem"]["threads"]
     resources:
         mem = 8000
@@ -167,12 +167,12 @@ rule xtandem2pepxml:
         Convert t.xml files to pep.xml
     '''
     input:
-        txml="out/{db}/xtandem/{ds}/{sdb}/{xp}.t.xml",
+        txml="out/{db}/xtandem/{ds}/{xp}.{td}.t.xml",
     output:
-        pepxml="out/{db}/xtandem/{ds}/{sdb}/{xp}.pep.xml",
+        pepxml="out/{db}/xtandem/{ds}/{xp}.{td}.pep.xml",
     log:
-        o="log/{db}/xtandem2pepxml/{ds}/{sdb}/{xp}.out",
-        e="log/{db}/xtandem2pepxml/{ds}/{sdb}/{xp}.err"
+        o="log/{db}/xtandem2pepxml/{ds}/{xp}.{td}.out",
+        e="log/{db}/xtandem2pepxml/{ds}/{xp}.{td}.err"
     params:
     threads: 1
     resources:
