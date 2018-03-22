@@ -10,7 +10,9 @@ def input_files(software,iftype,oftype):
             if config["datasets"][ds]["enabled"]:
                 for db in config["active_dbs"]:
                     for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
-                        yield "out/{db}/{sw}/{ds}/{xp}.{oftype}".format(sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds,oftype=oftype)
+                        #for sdb in ['db','decoys','db_and_decoys']:
+                        for sdb in ['db','decoys']:
+                            yield "out/{db}/{sw}/{ds}/{sdb}/{xp}.{oftype}".format(sdb=sdb,sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds,oftype=oftype)
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
@@ -20,10 +22,6 @@ rule all:
         input_files("comet","raw","pep.xml"),
         input_files("xtandem","mgf","t.xml"),
         input_files("xtandem","raw","t.xml")
-        #["out/{db}/comet/{ds}/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["comet"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/prot/raw/{ds}/*.raw".format(ds=ds))],
-        #["out/{db}/comet/{ds}/{xp}.pep.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["comet"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/prot/mzML/{ds}/*.mzML".format(ds=ds))],
-        #["out/{db}/xtandem/{ds}/{xp}.t.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/prot/raw/{ds}/*.raw".format(ds=ds))],
-        #["out/{db}/xtandem/{ds}/{xp}.t.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/prot/mgf/{ds}/*.mgf".format(ds=ds))],
 
 rule convert_leucines:
     input:
@@ -85,16 +83,16 @@ rule comet:
     '''
     input:
         data="res/data/prot/mzML/{ds}/{xp}.mzML",
-        db="out/{db}/db/db_and_decoys.fasta",
+        db="out/{db}/db/{sdb}.fasta",
     output:
-        xml="out/{db}/comet/{ds}/{xp}.pep.xml"
+        xml="out/{db}/comet/{ds}/{sdb}/{xp}.pep.xml"
     log:
-        o="log/{db}/comet/{ds}/{xp}.out",
-        e="log/{db}/comet/{ds}/{xp}.err"
+        o="log/{db}/comet/{ds}/{sdb}/{xp}.out",
+        e="log/{db}/comet/{ds}/{sdb}/{xp}.err"
     params:
         bin=config["software"]["comet"]["bin"],
         params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/comet/{ds}/{xp}".format(db=wc.db,xp=wc.xp,ds=wc.ds)
+        basename=lambda wc: "out/{db}/comet/{ds}/{sdb}/{xp}".format(db=wc.db,xp=wc.xp,ds=wc.ds,sdb=wc.sdb)
     threads: config["software"]["comet"]["threads"]
     resources:
         mem = 8000
@@ -105,13 +103,13 @@ rule comet:
 
 rule xtandem_taxonomy:
     input:
-        db="out/{db}/db/db_and_decoys.fasta"
+        db="out/{db}/db/{sdb}.fasta"
     output:
-        tax="out/{db}/db/xtandem.taxonomy.xml"
+        tax="out/{db}/xtandem/taxonomy/{sdb}.xtandem.taxonomy.xml"
     run:
         root = ET.Element("biomla", label="x! taxon-to-file matching list")
         taxon = ET.SubElement(root,"taxon", label=config["dbs"][wildcards.db]["tax"])
-        f = ET.SubElement(taxon,"file", format="peptide", URL=config["dbs"][wildcards.db]["path"])
+        f = ET.SubElement(taxon,"file", format="peptide", URL=input.db)
 
         tree = ET.ElementTree(root)
         tree.write(output.tax, xml_declaration=True)
@@ -122,17 +120,17 @@ rule xtandem:
     '''
     input:
         data="res/data/prot/mgf/{ds}/{xp}.mgf",
-        tax="out/{db}/db/xtandem.taxonomy.xml"
+        tax="out/{db}/xtandem/taxonomy/{sdb}.xtandem.taxonomy.xml"
     output:
-        xml="out/{db}/xtandem/{ds}/{xp}.t.xml",
-        conf="out/{db}/xtandem/{ds}_conf/{xp}.xml"
+        xml="out/{db}/xtandem/{ds}/{sdb}/{xp}.t.xml",
+        conf="out/{db}/xtandem/{ds}_conf/{sdb}/{xp}.xml"
     log:
-        o="log/{db}/xtandem/{ds}/{xp}.out",
-        e="log/{db}/xtandem/{ds}/{xp}.err"
+        o="log/{db}/xtandem/{ds}/{sdb}/{xp}.out",
+        e="log/{db}/xtandem/{ds}/{sdb}/{xp}.err"
     params:
         bin=config["software"]["xtandem"]["bin"],
         params=lambda wc: config["software"]["xtandem"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}".format(db=wc.db,ds=wc.ds,xp=wc.xp)
+        basename=lambda wc: "out/{db}/xtandem/{ds}/{sdb}/{xp}".format(db=wc.db,ds=wc.ds,xp=wc.xp,sdb=wc.sdb)
     threads: config["software"]["xtandem"]["threads"]
     resources:
         mem = 8000
@@ -195,7 +193,7 @@ rule LegoParser:
 
 cfg = config["software"]["Lego"]
 
-java -cp cfg["jar"] "-Xmx{}m".format(params.mem) cfg["java_opts"]
+Java -cp cfg["jar"] "-Xmx{}m".format(params.mem) cfg["java_opts"]
 
 org.sphpp.workflow.module.Parser --input /local/tdidomenico/projects/prot/bin/Lego/tmp/target_data --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmTarget.tsv.gz
 org.sphpp.workflow.module.Parser --input /local/tdidomenico/projects/prot/bin/Lego/tmp/decoy_data --outputPsm /local/tdidomenico/projects/prot/bin/Lego/tmp/results/PsmDecoy.tsv.gz

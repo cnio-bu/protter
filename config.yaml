@@ -12,7 +12,7 @@ dbs:
 
 datasets:
     sabido:
-        enabled: True
+        enabled: False
     wei_2016:
         urls:
             pub: https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00390
