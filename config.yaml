@@ -1,14 +1,12 @@
-active_dbs:
-    - GENCODEv27
-    - GENCODEv24
-
 dbs:
     GENCODEv27:
         path: res/data/seq/gencode/gencode.v27.pc_translations.fa
         tax: human
+        enabled: True
     GENCODEv24:
         path: res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
         tax: human
+        enabled: False
 
 datasets:
     sabido:

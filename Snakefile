@@ -4,36 +4,26 @@ import xml.etree.ElementTree as ET
 
 configfile: "config.yaml"
 
-def input_searches(software,iftype,oftype):
-    if config["software"][software]["enabled"]:
-        for ds in config["datasets"]:
-            if config["datasets"][ds]["enabled"]:
-                for db in config["active_dbs"]:
-                    for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
-                        #for td in ['db','decoys','target_and_decoys']:
-                        for td in ['target','decoy']:
-                            yield "out/{db}/{sw}/{ds}/{xp}.{td}.{oftype}".format(td=td,sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds,oftype=oftype)
+def getxps(ds,iftype):
+    for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
+        yield os.path.splitext(os.path.basename(fname))[0]
 
-def input_percolator():
+def input_all():
     for software in config["software"]["search"]:
+        iftype = config["software"]["search"][software]["iftype"]
         if config["software"]["search"][software]["enabled"]:
-            for iftype in [config["software"]["search"][software]["iftype"],'raw']:
                 for ds in config["datasets"]:
                     if config["datasets"][ds]["enabled"]:
-                        for db in config["active_dbs"]:
-                            for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
-                                yield "out/{db}/percolator/{sw}/{ds}/{xp}/percolator.target.proteins.txt".format(sw=software,db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds)
+                        for db in config["dbs"]:
+                            if config["dbs"][db]["enabled"]:
+                                yield "out/{db}/percolator/{sw}/{ds}/percolator.target.peptides.txt".format(sw=software,db=db,ds=ds)
 
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        input_percolator()
-        #input_searches("comet","mzML","pep.xml"),
-        #input_searches("comet","raw","pep.xml"),
-        #input_searches("xtandem","mgf","pep.xml"),
-        #input_searches("xtandem","raw","pep.xml")
+        input_all()
 
 rule convert_leucines:
     input:
@@ -198,26 +188,19 @@ rule percolator:
         Run the crux percolator agorithm to separate target from decoy matches.
     '''
     input:
-        target="out/{db}/{sw}/{ds}/{xp}.target.pep.xml",
-        decoy="out/{db}/{sw}/{ds}/{xp}.decoy.pep.xml"
+        targets = lambda wc: ["out/{db}/{sw}/{ds}/{xp}.target.pep.xml".format(db=wc.db,xp=xp,ds=wc.ds,sw=wc.sw) for xp in getxps(wc.ds,config["software"]["search"][wc.sw]["iftype"])] 
     output:
-        d="out/{db}/percolator/{sw}/{ds}/{xp}",
-        f="out/{db}/percolator/{sw}/{ds}/{xp}/percolator.target.proteins.txt"
+        d="out/{db}/percolator/{sw}/{ds}",
+        f="out/{db}/percolator/{sw}/{ds}/percolator.target.peptides.txt",
+        l="out/{db}/percolator/{sw}/{ds}/input_list"
     log:
-        o="log/{db}/percolator/{sw}/{ds}/{xp}.out",
-        e="log/{db}/percolator/{sw}/{ds}/{xp}.err"
+        o="log/{db}/percolator/{sw}/{ds}.out",
+        e="log/{db}/percolator/{sw}/{ds}.err"
     threads: 1
     resources:
         mem = 8000
-    shell:'''
-        bin/crux/crux percolator --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} {input.target} > {log.o} 2> {log.e}
-    '''
-
-rule xtandem_group:
-    '''
-        Check that all xtandem output files are ready and write a flag
-    '''
-    input:
-        ["out/{db}/xtandem/{ds}/{xp}.t.xml".format(db=db,xp=os.path.splitext(os.path.basename(fname))[0],ds=ds) for ds in config["datasets"] if config["software"]["search"]["xtandem"]["enabled"] and config["datasets"][ds]["enabled"] for db in config["active_dbs"] for fname in glob.glob("res/data/raw/{ds}/*.mzML".format(ds=ds))],
-    output:
-        touch("out/{db}/xtandem/{ds}.done")
+    run:
+        with open(output.l,'w') as ofh:
+            for t in input.targets:
+                ofh.write("{}\n".format(t))
+        shell("bin/crux/crux percolator --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
