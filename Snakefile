@@ -4,19 +4,30 @@ import xml.etree.ElementTree as ET
 
 configfile: "config.yaml"
 
-def getxps(ds,iftype):
-    for fname in glob.glob("res/data/prot/{iftype}/{ds}/*.{iftype}".format(ds=ds,iftype=iftype)):
-        yield os.path.splitext(os.path.basename(fname))[0]
+def get_samples(ds):
+    fpath = "res/data/prot/{ds}".format(ds=ds)
+    csvpath  = fpath + "/groups.csv"
+    groups = {}
+    with open(csvpath) as fh:
+        for r in fh:
+            r = r.rstrip("\n")
+            g,f = r.split(",")
+            f = f.rstrip(".mzML")
+            try:
+                groups[g].append(f)
+            except KeyError:
+                groups[g] = [f]
+    return groups
 
 def input_all():
     for software in config["software"]["search"]:
-        iftype = config["software"]["search"][software]["iftype"]
         if config["software"]["search"][software]["enabled"]:
-                for ds in config["datasets"]:
-                    if config["datasets"][ds]["enabled"]:
+            for ds in config["datasets"]:
+                if config["datasets"][ds]["enabled"]:
+                    for group in get_samples(ds):
                         for db in config["dbs"]:
                             if config["dbs"][db]["enabled"]:
-                                yield "out/{db}/percolator/{sw}/{ds}/percolator.target.peptides.txt".format(sw=software,db=db,ds=ds)
+                                yield "out/{db}/percolator/{sw}/{ds}/{group}/percolator.target.peptides.txt".format(group=group,sw=software,db=db,ds=ds)
 
 rule all:
     '''
@@ -36,29 +47,29 @@ rule convert_leucines:
                 for r in parsefastx(fh):
                     ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
 
-rule raw2mzML:
-    input:
-        raw="res/data/prot/raw/{ds}/{xp}.raw"
-    output:
-        mzML="res/data/prot/mzML/{ds}/{xp}.mzML"
-    log:    
-        o="log/raw2mzML/{ds}/{xp}.out",
-        e="log/raw2mzML/{ds}/{xp}.err"
-    shell:'''
-        msconvert {input.raw} --mzXML --outfile {output.mzML} > {log.o} 2> {log.e}
-    '''
-
-rule raw2mgf:
-    input:
-        raw="res/data/prot/raw/{ds}/{xp}.raw"
-    output:
-        mgf="res/data/prot/mgf/{ds}/{xp}.mgf"
-    log:    
-        o="log/raw2mgf/{ds}/{xp}.out",
-        e="log/raw2mgf/{ds}/{xp}.err"
-    shell:'''
-        msconvert {input.raw} --mgf --outfile {output.mgf} > {log.o} 2> {log.e}
-    '''
+#rule raw2mzML:
+#    input:
+#        raw="res/data/prot/{ds}/{sample}.raw"
+#    output:
+#        mzML="res/data/prot/{ds}/{sample}.mzML"
+#    log:    
+#        o="log/raw2mzML/{ds}/{sample}.out",
+#        e="log/raw2mzML/{ds}/{sample}.err"
+#    shell:'''
+#        msconvert {input.raw} --mzXML --outfile {output.mzML} > {log.o} 2> {log.e}
+#    '''
+#
+#rule raw2mgf:
+#    input:
+#        raw="res/data/prot/{ds}/{sample}.raw"
+#    output:
+#        mgf="res/data/prot/{ds}/{sample}.mgf"
+#    log:    
+#        o="log/raw2mgf/{ds}/{sample}.out",
+#        e="log/raw2mgf/{ds}/{sample}.err"
+#    shell:'''
+#        msconvert {input.raw} --mgf --outfile {output.mgf} > {log.o} 2> {log.e}
+#    '''
 
 rule add_decoys:
     '''
@@ -84,17 +95,17 @@ rule comet:
         Run comet on the files against the "decoyed" database.
     '''
     input:
-        data="res/data/prot/mzML/{ds}/{xp}.mzML",
+        data="res/data/prot/{ds}/{sample}.mzML",
         db="out/{db}/db/{td}.fasta",
     output:
-        xml="out/{db}/comet/{ds}/{xp}.{td}.pep.xml"
+        xml="out/{db}/comet/{ds}/{sample}.{td}.pep.xml"
     log:
-        o="log/{db}/comet/{ds}/{xp}.{td}.out",
-        e="log/{db}/comet/{ds}/{xp}.{td}.err"
+        o="log/{db}/comet/{ds}/{sample}.{td}.out",
+        e="log/{db}/comet/{ds}/{sample}.{td}.err"
     params:
         bin=config["software"]["search"]["comet"]["bin"],
         params=lambda wc: config["software"]["search"]["comet"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/comet/{ds}/{xp}.{td}".format(db=wc.db,xp=wc.xp,ds=wc.ds,td=wc.td)
+        basename=lambda wc: "out/{db}/comet/{ds}/{sample}.{td}".format(db=wc.db,sample=wc.sample,ds=wc.ds,td=wc.td)
     threads: config["software"]["search"]["comet"]["threads"]
     resources:
         mem = 8000
@@ -121,18 +132,18 @@ rule xtandem:
         Run xtandem on the files against the "decoyed" database.
     '''
     input:
-        data="res/data/prot/mgf/{ds}/{xp}.mgf",
+        data="res/data/prot/{ds}/{sample}.mzML",
         tax="out/{db}/xtandem/taxonomy/{td}.xtandem.taxonomy.xml"
     output:
-        xml="out/{db}/xtandem/{ds}/{xp}.{td}.t.xml",
-        conf="out/{db}/xtandem/{ds}_conf/{xp}.{td}.xml"
+        xml=touch("out/{db}/xtandem/{ds}/{sample}.{td}.t.xml"),
+        conf="out/{db}/xtandem/{ds}_conf/{sample}.{td}.xml"
     log:
-        o="log/{db}/xtandem/{ds}/{xp}.{td}.out",
-        e="log/{db}/xtandem/{ds}/{xp}.{td}.err"
+        o="log/{db}/xtandem/{ds}/{sample}.{td}.out",
+        e="log/{db}/xtandem/{ds}/{sample}.{td}.err"
     params:
         bin=config["software"]["search"]["xtandem"]["bin"],
         params=lambda wc: config["software"]["search"]["xtandem"]["params"].format(ds=wc.ds),
-        basename=lambda wc: "out/{db}/xtandem/{ds}/{xp}.{td}".format(db=wc.db,ds=wc.ds,xp=wc.xp,td=wc.td)
+        basename=lambda wc: "out/{db}/xtandem/{ds}/{sample}.{td}".format(db=wc.db,ds=wc.ds,sample=wc.sample,td=wc.td)
     threads: config["software"]["search"]["xtandem"]["threads"]
     resources:
         mem = 8000
@@ -169,12 +180,12 @@ rule xtandem2pepxml:
         Convert t.xml files to pep.xml
     '''
     input:
-        txml="out/{db}/xtandem/{ds}/{xp}.{td}.t.xml",
+        txml="out/{db}/xtandem/{ds}/{sample}.{td}.t.xml",
     output:
-        pepxml="out/{db}/xtandem/{ds}/{xp}.{td}.pep.xml",
+        pepxml="out/{db}/xtandem/{ds}/{sample}.{td}.pep.xml",
     log:
-        o="log/{db}/xtandem2pepxml/{ds}/{xp}.{td}.out",
-        e="log/{db}/xtandem2pepxml/{ds}/{xp}.{td}.err"
+        o="log/{db}/xtandem2pepxml/{ds}/{sample}.{td}.out",
+        e="log/{db}/xtandem2pepxml/{ds}/{sample}.{td}.err"
     params:
     threads: 1
     resources:
@@ -188,14 +199,15 @@ rule percolator:
         Run the crux percolator agorithm to separate target from decoy matches.
     '''
     input:
-        targets = lambda wc: ["out/{db}/{sw}/{ds}/{xp}.target.pep.xml".format(db=wc.db,xp=xp,ds=wc.ds,sw=wc.sw) for xp in getxps(wc.ds,config["software"]["search"][wc.sw]["iftype"])] 
+        targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds)[wc.group]],
+        decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds)[wc.group]]
     output:
-        d="out/{db}/percolator/{sw}/{ds}",
-        f="out/{db}/percolator/{sw}/{ds}/percolator.target.peptides.txt",
-        l="out/{db}/percolator/{sw}/{ds}/input_list"
+        d="out/{db}/percolator/{sw}/{ds}/{group}",
+        f="out/{db}/percolator/{sw}/{ds}/{group}/percolator.target.peptides.txt",
+        l="out/{db}/percolator/{sw}/{ds}/{group}/input_list"
     log:
-        o="log/{db}/percolator/{sw}/{ds}.out",
-        e="log/{db}/percolator/{sw}/{ds}.err"
+        o="log/{db}/percolator/{sw}/{ds}/{group}.out",
+        e="log/{db}/percolator/{sw}/{ds}/{group}.err"
     threads: 1
     resources:
         mem = 8000

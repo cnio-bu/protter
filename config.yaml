@@ -29,10 +29,8 @@ software:
             params: res/conf/comet/comet.params.{ds}.conf
             threads: 4
             enabled: True
-            iftype: mzML
         xtandem:
             bin: bin/xtandem/bin/tandem.exe
             params: res/conf/xtandem/xtandem.params.{ds}.xml
             threads: 4
             enabled: True
-            iftype: mgf
