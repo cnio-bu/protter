@@ -191,7 +191,7 @@ rule xtandem2pepxml:
     resources:
         mem = 4000
     shell:'''
-        pepxmltk.py {input.txml} {output.pepxml}   
+        pepxmltk.py {input.txml} {output.pepxml} > {log.o} 2> {log.e}  
     '''
 
 rule percolator:
@@ -214,5 +214,7 @@ rule percolator:
     run:
         with open(output.l,'w') as ofh:
             for t in input.targets:
+                ofh.write("{}\n".format(t))
+            for t in input.decoys:
                 ofh.write("{}\n".format(t))
         shell("bin/crux/crux percolator --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")

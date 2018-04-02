@@ -8,5 +8,6 @@ dependencies:
     - snakemake
     - proteowizard
     - tstk
+    - lxml
 
     #for Xtandem .xml to pep.xml conversion also pip install pyteomics pyteomics.pepxmltk
