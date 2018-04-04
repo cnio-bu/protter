@@ -4,19 +4,18 @@ import xml.etree.ElementTree as ET
 
 configfile: "config.yaml"
 
-def get_samples(ds):
+def get_samples(ds,grouping):
     fpath = "res/data/prot/{ds}".format(ds=ds)
-    csvpath  = fpath + "/groups.csv"
+    #get the grouping statement from the config file and create a "gf" function with it
+    exec('gf = lambda x: {}'.format(config["datasets"][ds]["groupings"][grouping]), globals())
     groups = {}
-    with open(csvpath) as fh:
-        for r in fh:
-            r = r.rstrip("\n")
-            g,f = r.split(",")
-            f = f.rstrip(".mzML")
-            try:
-                groups[g].append(f)
-            except KeyError:
-                groups[g] = [f]
+    for fname in glob.glob("{}/*.mzML".format(fpath)):
+        f = os.path.splitext(os.path.basename(fname))[0]
+        g = gf(f)
+        try:
+            groups[g].append(f)
+        except KeyError:
+            groups[g] = [f]
     return groups
 
 def input_all():
@@ -24,10 +23,11 @@ def input_all():
         if config["software"]["search"][software]["enabled"]:
             for ds in config["datasets"]:
                 if config["datasets"][ds]["enabled"]:
-                    for group in get_samples(ds):
-                        for db in config["dbs"]:
-                            if config["dbs"][db]["enabled"]:
-                                yield "out/{db}/percolator/{sw}/{ds}/{group}/percolator.target.peptides.txt".format(group=group,sw=software,db=db,ds=ds)
+                    for grouping in config["datasets"][ds]["groupings"]:
+                        for group in get_samples(ds,grouping):
+                            for db in config["dbs"]:
+                                if config["dbs"][db]["enabled"]:
+                                    yield "out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/percolator.target.peptides.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds)
 
 rule all:
     '''
@@ -73,7 +73,7 @@ rule convert_leucines:
 
 rule add_decoys:
     '''
-        Use decoPYrat to add decoy sequences to the original database.
+        Use decoPYrat to generate decoy sequences.
     '''
     input:
         db="out/{db}/db/target.fasta"
@@ -92,7 +92,7 @@ rule add_decoys:
 
 rule comet:
     '''
-        Run comet on the files against the "decoyed" database.
+        Run comet on the files.
     '''
     input:
         data="res/data/prot/{ds}/{sample}.mzML",
@@ -129,7 +129,7 @@ rule xtandem_taxonomy:
 
 rule xtandem:
     '''
-        Run xtandem on the files against the "decoyed" database.
+        Run xtandem on the files.
     '''
     input:
         data="res/data/prot/{ds}/{sample}.mzML",
@@ -199,16 +199,16 @@ rule percolator:
         Run the crux percolator agorithm to separate target from decoy matches.
     '''
     input:
-        targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds)[wc.group]],
-        decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds)[wc.group]]
+        targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
+        decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
     output:
-        d="out/{db}/percolator/{sw}/{ds}/{group}",
-        f="out/{db}/percolator/{sw}/{ds}/{group}/percolator.target.peptides.txt",
-        l="out/{db}/percolator/{sw}/{ds}/{group}/input_list"
+        d="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}",
+        f="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/percolator.target.peptides.txt",
+        l="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/input_list"
     log:
-        o="log/{db}/percolator/{sw}/{ds}/{group}.out",
-        e="log/{db}/percolator/{sw}/{ds}/{group}.err"
-    threads: 1
+        o="log/{db}/percolator/{sw}/{ds}/{grouping}/{group}.out",
+        e="log/{db}/percolator/{sw}/{ds}/{grouping}/{group}.err"
+    threads: 3
     resources:
         mem = 8000
     run:
