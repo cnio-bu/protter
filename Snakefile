@@ -27,7 +27,8 @@ def input_all():
                         for group in get_samples(ds,grouping):
                             for db in config["dbs"]:
                                 if config["dbs"][db]["enabled"]:
-                                    yield "out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/percolator.target.peptides.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds)
+                                    for em in config["software"]["assign-confidence"]["methods"]:
+                                        yield "out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
 
 rule all:
     '''
@@ -204,7 +205,8 @@ rule percolator:
     output:
         d="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}",
         f="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/percolator.target.peptides.txt",
-        l="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/input_list"
+        l="out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/input_list",
+        p=temp("out/{db}/percolator/{sw}/{ds}/{grouping}/{group}/make-pin.pin")
     log:
         o="log/{db}/percolator/{sw}/{ds}/{grouping}/{group}.out",
         e="log/{db}/percolator/{sw}/{ds}/{grouping}/{group}.err"
@@ -218,3 +220,23 @@ rule percolator:
             for t in input.decoys:
                 ofh.write("{}\n".format(t))
         shell("bin/crux/crux percolator --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
+
+rule assign_confidence:
+    '''
+        Run the crux assign_confidence agorithm against PSMs.
+    '''
+    input:
+        targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
+        decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
+    output:
+        d="out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}",
+        f="out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt"
+    log:
+        o="log/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}.out",
+        e="log/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}.err"
+    threads: 3
+    resources:
+        mem = 8000
+    shell:"""
+        bin/crux/crux assign-confidence --overwrite T --estimation-method {wildcards.em} --output-dir {output.d} {input.targets} > {log.o} 2> {log.e}
+    """
