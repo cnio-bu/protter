@@ -87,7 +87,7 @@ rule add_decoys:
     params:
         tmp="out/{db}/db/decoyPYrat.tmp.fasta"
     shell:"""
-        python bin/decoyPYrat.py {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy > {log.o} 2> {log.e}
+        python bin/decoyPYrat.py {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy -k > {log.o} 2> {log.e}
         cat {input.db} {output.dec} >> {output.dbd} 2>> {log.e}
     """
 
