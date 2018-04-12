@@ -37,16 +37,20 @@ rule all:
     input:
         input_all()
 
-rule convert_leucines:
+rule process_db:
     input:
         db=lambda wc: config["dbs"][wc.db]["path"]
     output:
         db="out/{db}/db/target.fasta"
     run:
-        with open(input.db) as fh:
-            with open(output.db,"w") as ofh:
+        with open(output.db,"w") as ofh:
+            with open(input.db) as fh:
                 for r in parsefastx(fh):
                     ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
+            if config["dbs"][wildcards.db]["add_crap"]:
+                with open("res/data/seq/crap/crap.fasta") as fh:
+                    for r in parsefastx(fh):
+                        ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
 
 #rule raw2mzML:
 #    input:
