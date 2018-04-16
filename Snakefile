@@ -26,7 +26,7 @@ def input_all():
                     for grouping in config["datasets"][ds]["groupings"]:
                         for group in get_samples(ds,grouping):
                             for db in config["dbs"]:
-                                if config["dbs"][db]["enabled"]:
+                                if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
                                     for em in config["software"]["assign-confidence"]["methods"]:
                                         yield "out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
 
@@ -39,42 +39,15 @@ rule all:
 
 rule process_db:
     input:
-        db=lambda wc: config["dbs"][wc.db]["path"]
+        dbs=lambda wc: config["dbs"][wc.db]["paths"]
     output:
         db="out/{db}/db/target.fasta"
     run:
         with open(output.db,"w") as ofh:
-            with open(input.db) as fh:
-                for r in parsefastx(fh):
-                    ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
-            if config["dbs"][wildcards.db]["add_crap"]:
-                with open("res/data/seq/crap/crap.fasta") as fh:
+            for fpath in input.dbs:
+                with open(fpath) as fh:
                     for r in parsefastx(fh):
                         ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
-
-#rule raw2mzML:
-#    input:
-#        raw="res/data/prot/{ds}/{sample}.raw"
-#    output:
-#        mzML="res/data/prot/{ds}/{sample}.mzML"
-#    log:    
-#        o="log/raw2mzML/{ds}/{sample}.out",
-#        e="log/raw2mzML/{ds}/{sample}.err"
-#    shell:'''
-#        msconvert {input.raw} --mzXML --outfile {output.mzML} > {log.o} 2> {log.e}
-#    '''
-#
-#rule raw2mgf:
-#    input:
-#        raw="res/data/prot/{ds}/{sample}.raw"
-#    output:
-#        mgf="res/data/prot/{ds}/{sample}.mgf"
-#    log:    
-#        o="log/raw2mgf/{ds}/{sample}.out",
-#        e="log/raw2mgf/{ds}/{sample}.err"
-#    shell:'''
-#        msconvert {input.raw} --mgf --outfile {output.mgf} > {log.o} 2> {log.e}
-#    '''
 
 rule add_decoys:
     '''

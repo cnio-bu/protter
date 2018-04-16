@@ -1,18 +1,30 @@
 dbs:
     GENCODEv27:
-        path: res/data/seq/gencode/gencode.v27.pc_translations.fa
+        paths:
+            - res/data/seq/gencode/gencode.v27.pc_translations.fa
+            - res/data/seq/crap/crap.fasta
         tax: human
         enabled: True
-        add_crap: True
+    GENCODEv27_sabido:
+        paths:
+            - res/data/seq/gencode/gencode.v27.pc_translations.fa
+            - res/data/seq/crap/crap.fasta
+            - res/data/seq/sabido/Human.DeNovo.protein
+        tax: human
+        enabled: True
     GENCODEv24:
-        path: res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
+        paths: 
+            - res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
+            - res/data/seq/crap/crap.fasta
         tax: human
         enabled: False
-        add_crap: True
 
 datasets:
     sabido:
         enabled: True
+        dbs:
+            - GENCODEv27
+            - GENCODEv27_sabido
         groupings:
             single: 'os.path.splitext(x)[0]'
             byrep: '"_".join(x.split("_")[0:4])'
@@ -21,10 +33,14 @@ datasets:
             pub: https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00390
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD004092
         enabled: False
+        dbs:
+            - GENCODEv27
         groupings:
             single: 'os.path.splitext(x)[0]'
     kim_2014:
-        enabled: False
+        enabled: True
+        dbs:
+            - GENCODEv27
         urls:
             pub: https://www.nature.com/articles/nature13302
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
