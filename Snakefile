@@ -18,7 +18,7 @@ def get_samples(ds,grouping):
             groups[g] = [f]
     return groups
 
-def input_all():
+def input_assign_confidence():
     for software in config["software"]["search"]:
         if config["software"]["search"][software]["enabled"]:
             for ds in config["datasets"]:
@@ -30,12 +30,24 @@ def input_all():
                                     for em in config["software"]["assign-confidence"]["methods"]:
                                         yield "out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
 
+def input_psm_convert():
+    for software in config["software"]["search"]:
+        if config["software"]["search"][software]["enabled"]:
+            for ds in config["datasets"]:
+                if config["datasets"][ds]["enabled"]:
+                    for db in config["dbs"]:
+                        if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
+                                for sample in get_samples(ds,'single'):
+                                    for td in ['target','decoy']:
+                                        yield "out/{db}/{sw}/{ds}/{sample}.{td}.tsv".format(sw=software,db=db,ds=ds,sample=sample,td=td)
+
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        input_all()
+        input_assign_confidence(),
+        input_psm_convert(),
 
 rule process_db:
     input:
@@ -90,6 +102,26 @@ rule comet:
     shell:"""
         export NSLOTS={threads}
         {params.bin} -P{params.params} -D{input.db} -N{params.basename} {input.data} > {log.o} 2> {log.e}
+    """
+
+rule psm-convert:
+    input:
+        db="out/{db}/db/{td}.fasta",
+        psm="out/{db}/{sw}/{ds}/{sample}.{td}.pep.xml"
+    output:
+        d=temp("out/{db}/{sw}/{ds}/{sample}.{td}.psm-convert"),
+        f="out/{db}/{sw}/{ds}/{sample}.{td}.tsv"
+    log:
+        o="log/{db}/psm-convert/{ds}/{sample}.{td}.out",
+        e="log/{db}/psm-convert/{ds}/{sample}.{td}.err"
+    params:
+    threads: 1
+    resources:
+        mem = 1000
+    shell:"""
+        bin/crux/crux psm-convert --overwrite T --protein-database {input.db} --output-dir {output.d} {input.psm} tsv > {log.o} 2> {log.e}
+        mv {output.d}/psm-convert.txt {output.f}
+        rm {output.d}/*
     """
 
 rule xtandem_taxonomy:
