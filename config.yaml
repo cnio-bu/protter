@@ -12,6 +12,11 @@ dbs:
             - res/data/seq/sabido/Human.DeNovo.protein
         tax: human
         enabled: True
+        add_confidence:
+            -
+                neg: True
+                column: 'protein id'
+                strings: ["ENS","sp\\|","KKA1_ECOLX"]
     GENCODEv24:
         paths: 
             - res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa

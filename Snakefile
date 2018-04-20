@@ -1,6 +1,8 @@
 import os,glob
 from tstk.io import parsefastx
 import xml.etree.ElementTree as ET
+import pandas as pd
+from statsmodels.stats.multitest import fdrcorrection_twostage
 
 configfile: "config.yaml"
 
@@ -30,16 +32,16 @@ def input_assign_confidence():
                                     for em in config["software"]["assign-confidence"]["methods"]:
                                         yield "out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
 
-def input_psm_convert():
+def input_add_confidence():
     for software in config["software"]["search"]:
         if config["software"]["search"][software]["enabled"]:
             for ds in config["datasets"]:
                 if config["datasets"][ds]["enabled"]:
                     for db in config["dbs"]:
-                        if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
-                                for sample in get_samples(ds,'single'):
-                                    for td in ['target','decoy']:
-                                        yield "out/{db}/{sw}/{ds}/{sample}.{td}.tsv".format(sw=software,db=db,ds=ds,sample=sample,td=td)
+                        if "add_confidence" in config["dbs"][db]:
+                            if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
+                                    for sample in get_samples(ds,'single'):
+                                        yield "out/{db}/add_confidence/{sw}/{ds}/{sample}.tsv".format(sw=software,db=db,ds=ds,sample=sample)
 
 rule all:
     '''
@@ -47,7 +49,7 @@ rule all:
     '''
     input:
         input_assign_confidence(),
-        input_psm_convert(),
+        input_add_confidence()
 
 rule process_db:
     input:
@@ -104,7 +106,7 @@ rule comet:
         {params.bin} -P{params.params} -D{input.db} -N{params.basename} {input.data} > {log.o} 2> {log.e}
     """
 
-rule psm-convert:
+rule psm_convert:
     input:
         db="out/{db}/db/{td}.fasta",
         psm="out/{db}/{sw}/{ds}/{sample}.{td}.pep.xml"
@@ -123,6 +125,58 @@ rule psm-convert:
         mv {output.d}/psm-convert.txt {output.f}
         rm {output.d}/*
     """
+    
+def dfilter(df,field,strings,neg=True):
+    if isinstance(strings, str):
+        strings = [strings]
+    for string in strings:
+        if neg:
+            df = df[~df[field].str.contains(string)]
+        else:
+            df = df[df[field].str.contains(string)]
+    return df
+
+rule add_confidence:
+    input:
+        t="out/{db}/{sw}/{ds}/{sample}.target.tsv",
+        d="out/{db}/{sw}/{ds}/{sample}.decoy.tsv"
+    output:
+        f="out/{db}/add_confidence/{sw}/{ds}/{sample}.tsv"
+    params:
+    threads: 1
+    resources:
+        mem = 4000
+    run:
+        filters  = config["dbs"][wildcards.db]["add_confidence"]
+
+        #run filter separately to save memory
+        dft = pd.read_table(input.t)
+        for f in filters:
+            neg = f["neg"]
+            col = f["column"]
+            strings = f["strings"]
+            dft = dfilter(dft,col,strings,neg)
+
+        dfd = pd.read_table(input.d)
+        for f in filters:
+            neg = f["neg"]
+            col = f["column"]
+            strings = f["strings"]
+            dfd = dfilter(dfd,col,strings,neg)
+
+        df = dft.append(dfd,ignore_index = True)
+
+        df = df.sort_values("xcorr score", ascending=False)
+        df["is_decoy"] = df.apply(lambda x: 1 if "decoy" in x["protein id"] else 0, axis=1)
+        total_decoys = df["is_decoy"].sum()
+        df["is_target"] = (df["is_decoy"] - 1) * -1
+        df["ndecoys"] = df["is_decoy"].cumsum()
+        df["ntargets"] = df["is_target"].cumsum()
+        df["pval"] = df["ndecoys"] / total_decoys
+        df["fdr"] = df["ndecoys"] / df["ntargets"]
+        df["padj"] = fdrcorrection_twostage(df["pval"])[1]
+
+        df.to_csv(output.f,sep="\t")
 
 rule xtandem_taxonomy:
     input:
