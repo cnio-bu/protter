@@ -5,13 +5,18 @@ dbs:
             - res/data/seq/crap/crap.fasta
         tax: human
         enabled: True
+        add_confidence:
+            -
+                neg: True
+                column: 'protein id'
+                strings: ["sp\\|","KKA1_ECOLX"]
     GENCODEv27_sabido:
         paths:
             - res/data/seq/gencode/gencode.v27.pc_translations.fa
             - res/data/seq/crap/crap.fasta
             - res/data/seq/sabido/Human.DeNovo.protein
         tax: human
-        enabled: True
+        enabled: False
         add_confidence:
             -
                 neg: True
@@ -26,7 +31,7 @@ dbs:
 
 datasets:
     sabido:
-        enabled: True
+        enabled: False
         dbs:
             - GENCODEv27
             - GENCODEv27_sabido

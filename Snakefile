@@ -1,4 +1,4 @@
-import os,glob
+import os,glob,math
 from tstk.io import parsefastx
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -20,7 +20,7 @@ def get_samples(ds,grouping):
             groups[g] = [f]
     return groups
 
-def input_assign_confidence():
+def input_crux_assign_confidence():
     for software in config["software"]["search"]:
         if config["software"]["search"][software]["enabled"]:
             for ds in config["datasets"]:
@@ -30,7 +30,7 @@ def input_assign_confidence():
                             for db in config["dbs"]:
                                 if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
                                     for em in config["software"]["assign-confidence"]["methods"]:
-                                        yield "out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
+                                        yield "out/{db}/crux_assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
 
 def input_add_confidence():
     for software in config["software"]["search"]:
@@ -48,7 +48,7 @@ rule all:
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
-        input_assign_confidence(),
+        #input_crux_assign_confidence(),
         input_add_confidence()
 
 rule process_db:
@@ -127,6 +127,7 @@ rule psm_convert:
     """
     
 def dfilter(df,field,strings,neg=True):
+    '''Function that filters a dataframe based on a field and a number of strings'''
     if isinstance(strings, str):
         strings = [strings]
     for string in strings:
@@ -151,6 +152,7 @@ rule add_confidence:
 
         #run filter separately to save memory
         dft = pd.read_table(input.t)
+        dft = dft[(dft["sp score"] > 0) & (dft["xcorr score"] > 0)]
         for f in filters:
             neg = f["neg"]
             col = f["column"]
@@ -158,6 +160,7 @@ rule add_confidence:
             dft = dfilter(dft,col,strings,neg)
 
         dfd = pd.read_table(input.d)
+        dfd = dfd[(dfd["sp score"] > 0) & (dfd["xcorr score"] > 0)]
         for f in filters:
             neg = f["neg"]
             col = f["column"]
@@ -166,15 +169,32 @@ rule add_confidence:
 
         df = dft.append(dfd,ignore_index = True)
 
-        df = df.sort_values("xcorr score", ascending=False)
+        #corrected xcorr as provided by cnic
+        df["R"] = df.apply(lambda x: 1.0 if x["charge"] < 3 else 1.2, axis=1)
+        df["xcorr2"] = df.apply(lambda x: math.log10(x["xcorr score"] / x["R"]) / math.log10(2 * x["peptide mass"] / 110), axis=1)
+        df = df.drop('R', 1)
+
+        #FDR calculations
         df["is_decoy"] = df.apply(lambda x: 1 if "decoy" in x["protein id"] else 0, axis=1)
-        total_decoys = df["is_decoy"].sum()
         df["is_target"] = (df["is_decoy"] - 1) * -1
-        df["ndecoys"] = df["is_decoy"].cumsum()
-        df["ntargets"] = df["is_target"].cumsum()
-        df["pval"] = df["ndecoys"] / total_decoys
-        df["fdr"] = df["ndecoys"] / df["ntargets"]
-        df["padj"] = fdrcorrection_twostage(df["pval"])[1]
+        total_decoys = df["is_decoy"].sum()
+
+        for f in ["xcorr2","sp score"]:
+            ndecoysf = "ndecoys_{}".format(f)
+            ntargetsf = "ntargets_{}".format(f)
+            pvalf = "pvalf_{}".format(f)
+            fdrf = "fdrf_{}".format(f)
+            padjf = "padjf_{}".format(f)
+
+            df = df.sort_values(f, ascending=False)
+            df[ndecoysf] = df["is_decoy"].cumsum()
+            df[ntargetsf] = df["is_target"].cumsum()
+            df[pvalf] = df[ndecoysf] / total_decoys
+            df[fdrf] = df[ndecoysf] / df[ntargetsf]
+
+            #adjusted p_value
+            df[padjf] = fdrcorrection_twostage(df[pvalf])[1]
+
 
         df.to_csv(output.f,sep="\t")
 
@@ -284,19 +304,19 @@ rule percolator:
                 ofh.write("{}\n".format(t))
         shell("bin/crux/crux percolator --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
 
-rule assign_confidence:
+rule crux_assign_confidence:
     '''
-        Run the crux assign_confidence agorithm against PSMs.
+        Run the crux assign-confidence agorithm against PSMs.
     '''
     input:
         targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
         decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
     output:
-        d="out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}",
-        f="out/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt"
+        d="out/{db}/crux_assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}",
+        f="out/{db}/crux_assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}/assign-confidence.target.txt"
     log:
-        o="log/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}.out",
-        e="log/{db}/assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}.err"
+        o="log/{db}/crux_assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}.out",
+        e="log/{db}/crux_assign_confidence/{sw}/{ds}/{em}/{grouping}/{group}.err"
     threads: 3
     resources:
         mem = 8000
