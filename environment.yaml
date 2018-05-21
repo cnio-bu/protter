@@ -10,5 +10,6 @@ dependencies:
     - tstk
     - lxml
     - statsmodels
+    - drmaa
 
     #for Xtandem .xml to pep.xml conversion also pip install pyteomics pyteomics.pepxmltk

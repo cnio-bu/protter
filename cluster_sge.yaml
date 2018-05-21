@@ -1,0 +1,4 @@
+__default__:
+    queue: main
+    threads: "{threads}"
+    mem: "{resources.mem}"

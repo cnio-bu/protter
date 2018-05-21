@@ -1,4 +1,5 @@
 import os,glob,math
+import numpy as np
 from tstk.io import parsefastx
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -152,7 +153,6 @@ rule add_confidence:
 
         #run filter separately to save memory
         dft = pd.read_table(input.t)
-        dft = dft[(dft["sp score"] > 0) & (dft["xcorr score"] > 0)]
         for f in filters:
             neg = f["neg"]
             col = f["column"]
@@ -160,7 +160,6 @@ rule add_confidence:
             dft = dfilter(dft,col,strings,neg)
 
         dfd = pd.read_table(input.d)
-        dfd = dfd[(dfd["sp score"] > 0) & (dfd["xcorr score"] > 0)]
         for f in filters:
             neg = f["neg"]
             col = f["column"]
@@ -171,7 +170,7 @@ rule add_confidence:
 
         #corrected xcorr as provided by cnic
         df["R"] = df.apply(lambda x: 1.0 if x["charge"] < 3 else 1.2, axis=1)
-        df["xcorr2"] = df.apply(lambda x: math.log10(x["xcorr score"] / x["R"]) / math.log10(2 * x["peptide mass"] / 110), axis=1)
+        df["xcorr2"] = df.apply(lambda x: np.nan if x["xcorr score"] == 0 else math.log10(x["xcorr score"] / x["R"]) / math.log10(2 * x["peptide mass"] / 110), axis=1)
         df = df.drop('R', 1)
 
         #FDR calculations
@@ -182,9 +181,9 @@ rule add_confidence:
         for f in ["xcorr2","sp score"]:
             ndecoysf = "ndecoys_{}".format(f)
             ntargetsf = "ntargets_{}".format(f)
-            pvalf = "pvalf_{}".format(f)
-            fdrf = "fdrf_{}".format(f)
-            padjf = "padjf_{}".format(f)
+            pvalf = "pval_{}".format(f)
+            fdrf = "fdr_{}".format(f)
+            padjf = "padj_{}".format(f)
 
             df = df.sort_values(f, ascending=False)
             df[ndecoysf] = df["is_decoy"].cumsum()
