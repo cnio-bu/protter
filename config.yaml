@@ -56,7 +56,7 @@ datasets:
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
         groupings:
             single: 'os.path.splitext(x)[0]'
-            tissue: '"_".join(x.split("_")[0:2])'
+            #tissue: '"_".join(x.split("_")[0:2])'
 
 software:
     search:
@@ -70,7 +70,3 @@ software:
             params: res/conf/xtandem/xtandem.params.{ds}.xml
             threads: 4
             enabled: False
-    assign-confidence:
-        methods:
-            - tdc
-            - mix-max
