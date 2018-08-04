@@ -29,6 +29,9 @@ dbs:
         tax: human
         enabled: False
 
+grouping_default:
+    single: 'os.path.splitext(x)[0]'
+
 datasets:
     sabido:
         enabled: False
@@ -45,8 +48,6 @@ datasets:
         enabled: False
         dbs:
             - GENCODEv27
-        groupings:
-            single: 'os.path.splitext(x)[0]'
     kim_2014:
         enabled: True
         dbs:
@@ -54,9 +55,46 @@ datasets:
         urls:
             pub: https://www.nature.com/articles/nature13302
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
-        groupings:
-            single: 'os.path.splitext(x)[0]'
-            #tissue: '"_".join(x.split("_")[0:2])'
+    PXD000787:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD000957:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD001242:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD001581:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD002194:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD002273:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD003947:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD004092:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD004142:
+        enabled: True
+        dbs:
+            - GENCODEv27
+    PXD008462:
+        enabled: True
+        dbs:
+            - GENCODEv27
 
 software:
     search:

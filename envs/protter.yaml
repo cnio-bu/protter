@@ -1,11 +1,9 @@
-name: prot
 channels:
     - bioconda
     - conda-forge
     - defaults
     - http://conda.anaconda.org/tdido
 dependencies:
-    - snakemake
     - proteowizard
     - tstk
     - lxml
