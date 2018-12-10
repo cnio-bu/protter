@@ -3,19 +3,18 @@ rule percolator:
         Run the crux percolator agorithm to separate target from decoy matches.
     '''
     input:
-        targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
-        decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy.pep.xml".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
+        targets = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.target/comet.target.txt".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
+        decoys = lambda wc: ["out/{db}/{sw}/{ds}/{sample}.decoy/comet.target.txt".format(db=wc.db,sw=wc.sw,ds=wc.ds,sample=sample) for sample in get_samples(wc.ds,wc.grouping)[wc.group]],
     output:
-        d="out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}",
-        f="out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}/percolator.target.peptides.txt",
         l="out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}/input_list",
+        f="out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}/percolator.target.peptides.txt",
         p=temp("out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}/make-pin.pin")
+    params:
+        d="out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}"
     log:
         o="log/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}.out",
         e="log/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}.err"
     threads: 1
-    conda:
-        "../envs/protter.yaml"
     resources:
         mem = 34000
     benchmark:
@@ -32,5 +31,5 @@ rule percolator:
                 ofh.write("{}\n".format(t))
             for t in input.decoys:
                 ofh.write("{}\n".format(t))
-        shell("bin/crux/crux percolator --tdc {tdc} --overwrite T --protein T --fido-empirical-protein-q T --output-dir {output.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
+        shell("bin/crux/crux percolator --tdc {tdc} --overwrite T --protein T --fido-empirical-protein-q T --output-dir {params.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
 

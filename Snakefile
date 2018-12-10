@@ -29,25 +29,13 @@ def input_crux_percolator():
                                 if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
                                     for em in ["tdc","mix-max"]:
                                         yield "out/{db}/percolator/{sw}/{ds}/{em}/{grouping}/{group}/percolator.target.peptides.txt".format(grouping=grouping,group=group,sw=software,db=db,ds=ds,em=em)
-'''
-def input_add_confidence():
-    for software in config["software"]["search"]:
-        if config["software"]["search"][software]["enabled"]:
-            for ds in config["datasets"]:
-                if config["datasets"][ds]["enabled"]:
-                    for db in config["dbs"]:
-                        if "add_confidence" in config["dbs"][db]:
-                            if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
-                                    for sample in get_samples(ds,'single'):
-                                        yield "out/{db}/add_confidence/{sw}/{ds}/{sample}.tsv".format(sw=software,db=db,ds=ds,sample=sample)
-'''
+
 rule all:
     '''
         Main rule, which requires as input the final output of the workflow.
     '''
     input:
         input_crux_percolator(),
-        #input_add_confidence()
 
 include: "rules/procdb.smk"
 include: "rules/comet.smk"

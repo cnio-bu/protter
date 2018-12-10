@@ -5,14 +5,8 @@ rule process_db:
         db="out/{db}/db/target.fasta"
     conda:
         "../envs/protter.yaml"
-    run:
-        from tstk.io import parsefastx
-
-        with open(output.db,"w") as ofh:
-            for fpath in input.dbs:
-                with open(fpath) as fh:
-                    for r in parsefastx(fh):
-                        ofh.write(">{}\n{}\n".format(r[0],r[1].replace("L","I")))
+    script:
+        "scripts/process_db.py"
 
 rule add_decoys:
     '''

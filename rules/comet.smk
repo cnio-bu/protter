@@ -6,7 +6,7 @@ rule comet:
         data="res/data/prot/{ds}/{sample}.mzML",
         db="out/{db}/db/{td}.fasta"
     output:
-        xml="out/{db}/comet/{ds}/{sample}.{td}.pep.xml"
+        xml="out/{db}/comet/{ds}/{sample}.{td}/comet.target.txt"
     log:
         o="log/{db}/comet/{ds}/{sample}.{td}.out",
         e="log/{db}/comet/{ds}/{sample}.{td}.err"
@@ -20,7 +20,6 @@ rule comet:
     resources:
         mem = 8000
     shell:"""
-        export NSLOTS={threads}
-        {params.bin} -P{params.params} -D{input.db} -N{params.basename} {input.data} > {log.o} 2> {log.e}
+        crux comet --num_threads {threads} --parameter-file {params.params} --output-dir {params.basename} --overwrite T {input.data} {input.db} > {log.o} 2> {log.e}
     """
 
