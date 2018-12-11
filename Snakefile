@@ -39,6 +39,4 @@ rule all:
 
 include: "rules/procdb.smk"
 include: "rules/comet.smk"
-#include: "rules/addconfidence.smk"
-#include: "rules/xtandem.smk"
 include: "rules/percolator.smk"

@@ -1,15 +1,16 @@
-dbs:
+bs:
+    GENCODEv29:
+        paths:
+            - res/data/seq/gencode/gencode.v29.pc_translations.fa
+            - res/data/seq/crap/crap.fasta
+        tax: human
+        enabled: False
     GENCODEv27:
         paths:
             - res/data/seq/gencode/gencode.v27.pc_translations.fa
             - res/data/seq/crap/crap.fasta
         tax: human
-        enabled: True
-        add_confidence:
-            -
-                neg: True
-                column: 'protein id'
-                strings: ["sp\\|","KKA1_ECOLX"]
+        enabled: False
     GENCODEv27_sabido:
         paths:
             - res/data/seq/gencode/gencode.v27.pc_translations.fa
@@ -17,11 +18,6 @@ dbs:
             - res/data/seq/sabido/Human.DeNovo.protein
         tax: human
         enabled: False
-        add_confidence:
-            -
-                neg: True
-                column: 'protein id'
-                strings: ["ENS","sp\\|","KKA1_ECOLX"]
     GENCODEv24:
         paths: 
             - res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
@@ -99,12 +95,6 @@ datasets:
 software:
     search:
         comet:
-            bin: bin/comet/comet.2017013.linux.exe
             params: res/conf/comet/comet.params.{ds}.conf
             threads: 4
             enabled: True
-        xtandem:
-            bin: bin/xtandem/bin/tandem.exe
-            params: res/conf/xtandem/xtandem.params.{ds}.xml
-            threads: 4
-            enabled: False
