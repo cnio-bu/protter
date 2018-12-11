@@ -19,7 +19,7 @@ rule comet:
         basename=lambda wc: "out/{db}/comet/{ds}/{sample}.{td}".format(db=wc.db,sample=wc.sample,ds=wc.ds,td=wc.td)
     threads: config["software"]["search"]["comet"]["threads"]
     conda:
-        "../envs/protter.yaml"
+        "../envs/environment.yaml"
     resources:
         mem = 8000
     shell:"""

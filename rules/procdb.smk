@@ -4,7 +4,7 @@ rule process_db:
     output:
         db="out/{db}/db/target.fasta"
     conda:
-        "../envs/protter.yaml"
+        "../envs/environment.yaml"
     script:
         "scripts/process_db.py"
 
@@ -23,9 +23,9 @@ rule add_decoys:
     params:
         tmp="out/{db}/db/decoyPYrat.tmp.fasta"
     conda:
-        "../envs/protter.yaml"
+        "../envs/environment.yaml"
     shell:"""
-        python bin/decoyPYrat.py {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy -k > {log.o} 2> {log.e}
+        decoypyrat {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy -k > {log.o} 2> {log.e}
         cat {input.db} {output.dec} >> {output.dbd} 2>> {log.e}
     """
 

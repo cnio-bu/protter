@@ -31,5 +31,5 @@ rule percolator:
                 ofh.write("{}\n".format(t))
             for t in input.decoys:
                 ofh.write("{}\n".format(t))
-        shell("bin/crux/crux percolator --tdc {tdc} --overwrite T --protein T --fido-empirical-protein-q T --output-dir {params.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
+        shell("crux percolator --tdc {tdc} --overwrite T --protein T --fido-empirical-protein-q T --output-dir {params.d} --list-of-files T {output.l} > {log.o} 2> {log.e}")
 
