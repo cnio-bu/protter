@@ -6,7 +6,10 @@ rule comet:
         data="res/data/prot/{ds}/{sample}.mzML",
         db="out/{db}/db/{td}.fasta"
     output:
-        xml="out/{db}/comet/{ds}/{sample}.{td}/comet.target.txt"
+        xml="out/{db}/comet/{ds}/{sample}.{td}/comet.target.pep.xml",
+        pin="out/{db}/comet/{ds}/{sample}.{td}/comet.target.pin",
+        par="out/{db}/comet/{ds}/{sample}.{td}/comet.target.params",
+        log="out/{db}/comet/{ds}/{sample}.{td}/comet.log.txt",
     log:
         o="log/{db}/comet/{ds}/{sample}.{td}.out",
         e="log/{db}/comet/{ds}/{sample}.{td}.err"
@@ -20,6 +23,5 @@ rule comet:
     resources:
         mem = 8000
     shell:"""
-        crux comet --num_threads {threads} --parameter-file {params.params} --output-dir {params.basename} --overwrite T {input.data} {input.db} > {log.o} 2> {log.e}
+        crux comet --num_threads {threads} --output_percolatorfile 1 --parameter-file {params.params} --output-dir {params.basename} --overwrite T {input.data} {input.db} > {log.o} 2> {log.e}
     """
-
