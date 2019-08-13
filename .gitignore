@@ -4,6 +4,7 @@ log.txt*
 out
 *.swp
 res/data
+res/conf
 tmp
 jdk*
 launch.sh
