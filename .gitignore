@@ -3,8 +3,9 @@ log
 log.txt*
 out
 *.swp
-res/data
-res/conf
+res/data/*
+res/conf/comet/*
+!res/conf/comet/comet.params.orbitrap.conf
 tmp
 jdk*
 launch.sh
