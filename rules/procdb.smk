@@ -1,12 +1,16 @@
 rule process_db:
     input:
-        dbs=lambda wc: config["dbs"][wc.db]["paths"]
+        paths=lambda wc: [config["dbs"][wc.db]["paths"][k] for k in config["dbs"][wc.db]["paths"]]
+    params:
+        dbs=lambda wc: [k for k in config["dbs"][wc.db]["paths"]]
     output:
         db="out/{db}/db/target.fasta"
     conda:
         "../envs/environment.yaml"
+    log:
+        o="log/process_db/{db}.out"
     script:
-        "scripts/process_db.py"
+        "../scripts/process_db.py"
 
 rule add_decoys:
     '''
