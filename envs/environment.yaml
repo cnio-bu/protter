@@ -1,8 +1,7 @@
 channels:
-    - bioconda
+    - tdido
     - conda-forge
-    - defaults
-    - http://conda.anaconda.org/tdido
+    - bioconda
 dependencies:
     - proteowizard
     - tstk
