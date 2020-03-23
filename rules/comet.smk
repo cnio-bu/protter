@@ -3,7 +3,7 @@ rule comet:
         Run comet on the files.
     '''
     input:
-        data=lambda wc:"res/data/prot/{{ds}}/{{sample}}.{fmt}".format(fmt=config["datasets"][wc.ds]["fmt"]),
+        data=comet_input_file,
         db="out/{db}/db/{td}.fasta",
         params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds)
     output:

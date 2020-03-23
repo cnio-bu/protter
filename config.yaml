@@ -1,4 +1,10 @@
 dbs:
+    GENCODEv33:
+        paths:
+            crud: res/data/seq/crud/crud.fasta
+            gencode: res/data/seq/gencode/gencode.v33.pc_translations.fa
+        tax: human
+        enabled: True
     GUR:
         paths:
             crap: res/data/seq/crap/crap.fasta
@@ -13,7 +19,7 @@ dbs:
             crap: res/data/seq/crap/crap.fasta
             gencode: res/data/seq/gencode/gencode.v29.pc_translations.fa
         tax: human
-        enabled: True
+        enabled: False
     GENCODEv27:
         paths:
             - res/data/seq/gencode/gencode.v27.pc_translations.fa
@@ -28,7 +34,7 @@ dbs:
         tax: human
         enabled: False
     GENCODEv24:
-        paths: 
+        paths:
             - res/data/seq/gencode/gencode.v24.pc_translations.NoRT.fa
             - res/data/seq/crap/crap.fasta
         tax: human
@@ -37,7 +43,19 @@ dbs:
 grouping_default:
     single: 'os.path.splitext(x)[0]'
 
+dataset_path: "res/data/prot"
+
 datasets:
+    PXD010154:
+        source: PRIDE
+        project_accession: PXD010154
+        enabled: True
+        fmt: raw
+        dbs:
+            - GENCODEv33
+        urls:
+            pub: https://doi.org/10.15252/msb.20188503
+            data: https://www.ebi.ac.uk/pride/archive/projects/PXD010154
     sabido:
         enabled: False
         dbs:
@@ -62,52 +80,52 @@ datasets:
             pub: https://www.nature.com/articles/nature13302
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
     PXD000787:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD000957:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD001242:
-        enabled: True
+        enabled: False
         fmt: mgf
         dbs:
             - GENCODEv29
     PXD001581:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD002194:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD002273:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD003947:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD004092:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD004142:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
     PXD008462:
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv29
@@ -117,6 +135,18 @@ software:
         params: res/conf/comet/comet.params.{ds}.conf
         threads: 4
         enabled: True
+        fmts: [cms2, ms2, mzML, mzXML]
+    msconvert:
+        docker_image: chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:latest
+        local:
+            hostname: local_host
+            username: local_user
+            private_key: /home/local_user/.ssh/id_rsa
+        remote:
+            hostname: remote_host
+            username: remote_user
+            private_key: /home/remote_user/.ssh/id_rsa
+        fmts: [raw]
     percolator:
         modes:
             - mix-max
