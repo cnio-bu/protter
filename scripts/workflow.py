@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import os
 from urllib.parse import urlparse,urlunparse
 
@@ -7,6 +8,41 @@ import requests
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
 from .common import dataset_source,split_gzip_ext,url_basename
+
+
+def _download_pride_file_metadata(ds,config,meta_file_path):
+
+    ds_conf = config["datasets"][ds]
+    try:
+        proj_ac = ds_conf["project_accession"]
+    except KeyError:
+        proj_ac = ds
+
+    base_url = "http://www.ebi.ac.uk/pride/ws/archive"
+    request_url = "{}/file/list/project/{}".format(base_url, proj_ac)
+    response = requests.get(request_url)
+
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 401:
+            if "project_accession" in ds_conf:
+                raise ValueError("dataset '{}' has invalid PRIDE project "
+                                 "accession: '{}'".format(ds,proj_ac))
+            else:
+                raise ValueError("please specify a PRIDE project accession "
+                                 "for dataset '{}'".format(ds))
+        else:
+            raise e
+
+    file_meta = response.json()
+
+    meta_file_dir = os.path.dirname(meta_file_path)
+    os.makedirs(meta_file_dir, exist_ok=True)
+    with open(meta_file_path, 'w') as f:
+        json.dump(file_meta, f, indent=2)
+
+    return file_meta
 
 
 def _get_input_file_by_format(fmt,wildcards,config):
@@ -34,6 +70,15 @@ def _get_lc_file_format(file_path):
     return file_ext[1:].lower()
 
 
+def _get_pride_file_metadata(ds,config,meta_file_path):
+    try:
+        with open(meta_file_path) as f:
+            file_meta = json.load(f)
+    except FileNotFoundError:
+        file_meta = _download_pride_file_metadata(ds,config,meta_file_path)
+    return file_meta
+
+
 def _get_remote_input(file_pattern,source):
     if source == "PRIDE":
         # Though PRIDE files are hosted on an FTP site, they
@@ -54,7 +99,6 @@ def _strip_scheme_prefix(uri):
 
 def comet_input_file(wildcards,config):
     ds = wildcards.ds
-    sample = wildcards.sample
     ds_fmt = config["datasets"][ds]["fmt"]
     lc_ds_fmt = ds_fmt.lower()
 
@@ -86,31 +130,11 @@ def dataset_input_files(ds,config,sort=False):
     input_files = []
     if ds_src == "PRIDE":
 
-        try:
-            proj_ac = ds_conf["project_accession"]
-        except KeyError:
-            proj_ac = ds
+        meta_file_path = os.path.join(config["dataset_path"],ds,
+                                      "file-metadata.json")
+        file_meta = _get_pride_file_metadata(ds,config,meta_file_path)
 
-        base_url = "http://www.ebi.ac.uk/pride/ws/archive"
-        request_url = "{}/file/list/project/{}".format(base_url,proj_ac)
-        response = requests.get(request_url)
-
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            if response.status_code == 401:
-                if "project_accession" in ds_conf:
-                    raise ValueError("dataset '{}' has invalid PRIDE project "
-                                     "accession: '{}'".format(ds,proj_ac))
-                else:
-                    raise ValueError("please specify a PRIDE project accession "
-                                     "for dataset '{}'".format(ds))
-            else:
-                raise e
-
-        response_data = response.json()
-        for rec in response_data["list"]:
-            file_name = rec["fileName"]
+        for rec in file_meta["list"]:
             lc_file_fmt = _get_lc_file_format(rec["fileName"])
             if lc_file_fmt == lc_ds_fmt:
                 file_uri = _strip_scheme_prefix(rec["downloadLink"])
@@ -136,7 +160,6 @@ def dataset_input_files(ds,config,sort=False):
 
 def msconvert_input_file(wildcards,config):
     ds = wildcards.ds
-    sample = wildcards.sample
     ds_fmt = config["datasets"][ds]["fmt"]
     lc_ds_fmt = ds_fmt.lower()
 
