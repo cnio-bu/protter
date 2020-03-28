@@ -1,14 +1,19 @@
 from functools import partial
 import os
 
-from scripts.common import dataset_source, split_gzip_ext, url_basename
-from scripts.workflow import (comet_input_file, dataset_input_files,
-                              msconvert_input_file, msconvert_output_pattern)
+
+from scripts.workflow import (comet_input_file,
+                              dataset_groupings,
+                              dataset_metadata,
+                              msconvert_input_file,
+                              msconvert_output_pattern,
+                              sync_dataset_metadata,
+                              sync_sample_proxy_files)
 
 
 configfile: os.path.join(workflow.basedir, "config.yaml")
 
-config["dataset_path"] = os.path.relpath( os.path.join(
+config["dataset_path"] = os.path.relpath(os.path.join(
     workflow.basedir, config["dataset_path"]))
 
 msconvert_input_file = partial(msconvert_input_file, config=config)
@@ -17,14 +22,11 @@ comet_input_file = partial(comet_input_file, config=config)
 
 
 def get_samples(ds,grouping):
-    fpath = "res/data/prot/{ds}".format(ds=ds)
     #get the grouping statement from the config file and create a "gf" function with it
-    exec('gf = lambda x: {}'.format(config["datasets"][ds]["groupings"][grouping]), globals())
+    exec('gf = lambda x: {}'.format(dataset_groupings(ds,config)[grouping]), globals())
     groups = {}
-    ds_src = dataset_source(ds, config)
-    basename = os.path.basename if ds_src == "local" else url_basename
-    for fname in dataset_input_files(ds,config):
-        f = split_gzip_ext(basename(fname))[0]
+    ds_meta = dataset_metadata(ds,config)
+    for f in ds_meta["samples"].keys():
         g = gf(f)
         try:
             groups[g].append(f)
@@ -35,9 +37,9 @@ def get_samples(ds,grouping):
 def input_crux_percolator():
     for ds in config["datasets"]:
         if config["datasets"][ds]["enabled"]:
-            if "groupings" not in config["datasets"][ds]:
-                config["datasets"][ds]["groupings"] = config["grouping_default"]
-            for grouping in config["datasets"][ds]["groupings"]:
+            sync_dataset_metadata(ds,config)
+            sync_sample_proxy_files(ds,config)
+            for grouping in dataset_groupings(ds,config).keys():
                 for group in get_samples(ds,grouping):
                     for db in config["dbs"]:
                         if config["dbs"][db]["enabled"] and db in config["datasets"][ds]["dbs"]:
@@ -52,6 +54,8 @@ rule all:
     input:
         input_crux_percolator(),
 
+
+include: "rules/download_sample.smk"
 include: "rules/msconvert.smk"
 include: "rules/procdb.smk"
 include: "rules/comet.smk"

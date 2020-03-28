@@ -1,17 +1,113 @@
 #!/usr/bin/env python
 
+from calendar import timegm
+from datetime import datetime,timezone
+from ftplib import FTP
 import json
 import os
+import re
+import time
 from urllib.parse import urlparse,urlunparse
 
 import requests
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
 from .common import dataset_source,split_gzip_ext,url_basename
 
 
-def _download_pride_file_metadata(ds,config,meta_file_path):
+def _get_fmt_regex(fmts):
+    pattern = "^({})$".format("|".join(fmts))
+    return re.compile(pattern,re.IGNORECASE)
 
+
+def _is_comet_fmt(fmt,config):
+    regex = _get_fmt_regex(config["software"]["comet"]["fmts"])
+    return regex.match(fmt) is not None
+
+
+def _is_msconvert_fmt(fmt,config):
+    regex = _get_fmt_regex(config["software"]["msconvert"]["fmts"])
+    return regex.match(fmt) is not None
+
+
+def _make_ds_meta_file(ds,config,ds_meta_file):
+    ds_fmt_regex = _get_fmt_regex([config["datasets"][ds]["fmt"]])
+    ds_src = dataset_source(ds,config)
+    ds_dir = dataset_dir(ds,config)
+
+    ds_meta = {
+        "config": config["datasets"][ds],
+        "samples": {}
+    }
+
+    if ds_src == "PRIDE":
+
+        file_meta = _pride_file_metadata(ds,config)
+
+        for rec in file_meta["list"]:
+            sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
+            file_fmt = file_ext[1:]
+            if ds_fmt_regex.match(file_fmt):
+                assert sample not in ds_meta["samples"], \
+                    "sample names must be unique within a PRIDE dataset"
+                file_url = rec["downloadLink"]
+                ds_meta["samples"][sample] = {
+                    "size": rec["fileSize"],
+                    "url": file_url
+                }
+
+        mtime_info = _pride_file_mtime_info(
+            (x["url"] for x in ds_meta["samples"].values())
+        )
+        for sample,sample_meta in ds_meta["samples"].items():
+            url = sample_meta["url"]
+            mod_dt = datetime.fromtimestamp(mtime_info[url],timezone.utc)
+            sample_meta["last-modified"] = _utc_strftime(mod_dt)
+
+    elif ds_src == "local":
+
+        if os.path.isdir(ds_dir):
+            for item_name in sorted(os.listdir(ds_dir)):
+                item_path = os.path.join(ds_dir,item_name)
+                if os.path.isfile(item_path):
+                    sample,file_ext,gzip_ext = split_gzip_ext(item_name)
+                    file_fmt = file_ext[1:]
+                    if (ds_fmt_regex.match(file_fmt) and
+                            sample not in ds_meta["samples"]):
+                        ds_meta["samples"][sample] = {
+                            "path": item_path
+                        }
+
+    else:
+        raise ValueError(
+            "unsupported proteomics data source: '{}'".format(ds_src))
+
+    os.makedirs(ds_dir,exist_ok=True)
+    with open(ds_meta_file,"w") as f:
+        json.dump(ds_meta,f)
+
+    return ds_meta
+
+
+def _pride_dataset_readme_url(ds,ds_meta):
+    readme_url = None
+    for sample_meta in ds_meta["samples"].values():
+        file_url = sample_meta["url"]
+        parsed_url = urlparse(file_url)
+        url_path_parts = parsed_url.path.split("/")
+        ds_dir_path = "/".join(url_path_parts[:-1]) + "/"
+        pred_path = ds_dir_path + "README.txt"
+        pred_url_attrs = parsed_url[:2] + (pred_path,) + parsed_url[3:]
+        pred_url = urlunparse(pred_url_attrs)
+        if pred_url != readme_url:
+            if readme_url is None:
+                readme_url = pred_url
+            else:
+                raise ValueError(
+                    "cannot infer README URL for dataset: '{}'".format(ds))
+    return readme_url
+
+
+def _pride_file_metadata(ds,config):
     ds_conf = config["datasets"][ds]
     try:
         proj_ac = ds_conf["project_accession"]
@@ -19,7 +115,7 @@ def _download_pride_file_metadata(ds,config,meta_file_path):
         proj_ac = ds
 
     base_url = "http://www.ebi.ac.uk/pride/ws/archive"
-    request_url = "{}/file/list/project/{}".format(base_url, proj_ac)
+    request_url = "{}/file/list/project/{}".format(base_url,proj_ac)
     response = requests.get(request_url)
 
     try:
@@ -35,81 +131,47 @@ def _download_pride_file_metadata(ds,config,meta_file_path):
         else:
             raise e
 
-    file_meta = response.json()
-
-    meta_file_dir = os.path.dirname(meta_file_path)
-    os.makedirs(meta_file_dir, exist_ok=True)
-    with open(meta_file_path, 'w') as f:
-        json.dump(file_meta, f, indent=2)
-
-    return file_meta
+    return response.json()
 
 
-def _get_input_file_by_format(fmt,wildcards,config):
-    ds = wildcards.ds
-    sample = wildcards.sample
-    ds_src = dataset_source(ds,config)
-    exp_file_name = "{}.{}".format(sample,fmt.lower())
-    exp_gzip_name = "{}.gz".format(exp_file_name)
-    basename = os.path.basename if ds_src == "local" else url_basename
-    for file in dataset_input_files(ds,config,sort=True):
-        file_stem,file_ext,gzip_ext = split_gzip_ext(basename(file))
-        file_name = file_stem + file_ext.lower() + gzip_ext.lower()
-        if file_name in (exp_file_name,exp_gzip_name):
-            input_file = file
-            break
-    if ds_src != "local":
-        input_file = _get_remote_input(input_file,ds_src)
-    return input_file
+def _pride_file_mtime_info(file_urls):
+    pride_domain = "ftp.pride.ebi.ac.uk"
+    mtime_info = {}
+    with FTP(pride_domain) as ftp:
+        ftp.login()
+
+        for file_url in file_urls:
+
+            parsed_url = urlparse(file_url)
+            if parsed_url.netloc != pride_domain:
+                raise ValueError(
+                    "invalid PRIDE file URL: '{}'".format(file_url))
+
+            response = ftp.voidcmd("MDTM {}".format(parsed_url.path))
+            _,mdtm_ts = response.split()
+            mod_dt = datetime.strptime(mdtm_ts, "%Y%m%d%H%M%S")
+            mtime_info[file_url] = timegm(mod_dt.timetuple())
+
+    return mtime_info
 
 
-def _get_lc_file_format(file_path):
-    file_ext = split_gzip_ext(file_path)[1]
-    if not file_ext:
-        raise ValueError("cannot infer format of file: '{}'".format(file_path))
-    return file_ext[1:].lower()
+def _utc_strftime(dt):
+    """Format datetime object as UTC timestamp string."""
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _get_pride_file_metadata(ds,config,meta_file_path):
-    try:
-        with open(meta_file_path) as f:
-            file_meta = json.load(f)
-    except FileNotFoundError:
-        file_meta = _download_pride_file_metadata(ds,config,meta_file_path)
-    return file_meta
-
-
-def _get_remote_input(file_pattern,source):
-    if source == "PRIDE":
-        # Though PRIDE files are hosted on an FTP site, they
-        # are easier to access via the HTTP remote provider.
-        provider = HTTPRemoteProvider()
-        remote_patt = provider.remote(file_pattern,insecure=True)
-    else:
-        raise ValueError(
-            "unsupported proteomics data source: '{}'".format(source))
-    return remote_patt
-
-
-def _strip_scheme_prefix(uri):
-    # Stripping leading slashes is a hack, but a necessary one,
-    # as urlunparse appears to return a protocol-relative URL.
-    return urlunparse(("",) + urlparse(uri)[1:]).lstrip("/")
+def _utc_strptime(ts):
+    """Make datetime object from UTC timestamp string."""
+    return datetime.strptime(ts,"%Y-%m-%dT%H:%M:%SZ")
 
 
 def comet_input_file(wildcards,config):
     ds = wildcards.ds
     ds_fmt = config["datasets"][ds]["fmt"]
-    lc_ds_fmt = ds_fmt.lower()
 
-    comet_fmts = [x.lower()
-        for x in config["software"]["comet"]["fmts"]]
-    msconvert_fmts = [x.lower()
-        for x in config["software"]["msconvert"]["fmts"]]
-
-    if lc_ds_fmt in comet_fmts:
-        input_file = _get_input_file_by_format(ds_fmt,wildcards,config)
-    elif lc_ds_fmt in msconvert_fmts:
+    if _is_comet_fmt(ds_fmt,config):
+        input_file = sample_data_file(wildcards,config)
+    elif _is_msconvert_fmt(ds_fmt,config):
         input_file = msconvert_output_pattern(config)
     else:
         raise ValueError(
@@ -117,60 +179,33 @@ def comet_input_file(wildcards,config):
     return input_file
 
 
-def dataset_input_files(ds,config,sort=False):
-    """Get workflow input files for the specified dataset.
+def dataset_dir(ds,config):
+    return os.path.join(config["dataset_path"],ds)
 
-    Returns file paths if the dataset source is local,
-    otherwise returns file URLs.
-    """
+
+def dataset_groupings(ds,config):
     ds_conf = config["datasets"][ds]
-    ds_src = dataset_source(ds,config)
-    lc_ds_fmt = ds_conf["fmt"].lower()
-
-    input_files = []
-    if ds_src == "PRIDE":
-
-        meta_file_path = os.path.join(config["dataset_path"],ds,
-                                      "file-metadata.json")
-        file_meta = _get_pride_file_metadata(ds,config,meta_file_path)
-
-        for rec in file_meta["list"]:
-            lc_file_fmt = _get_lc_file_format(rec["fileName"])
-            if lc_file_fmt == lc_ds_fmt:
-                file_uri = _strip_scheme_prefix(rec["downloadLink"])
-                input_files.append(file_uri)
-
-    elif ds_src == "local":
-
-        ds_path = os.path.join(config["dataset_path"],ds)
-        if os.path.isdir(ds_path):
-            for file_name in os.listdir(ds_path):
-                file_path = os.path.join(ds_path,file_name)
-                if os.path.isfile(file_path):
-                    lc_file_fmt = _get_lc_file_format(file_path)
-                    if lc_file_fmt == lc_ds_fmt:
-                        input_files.append(file_path)
-
+    if "groupings" in ds_conf:
+        groupings = ds_conf["groupings"]
     else:
-        raise ValueError(
-            "unsupported proteomics data source: '{}'".format(ds_src))
+        groupings = config["grouping_default"]
+    return groupings
 
-    return sorted(input_files) if sort else input_files
+
+def dataset_metadata(ds,config):
+    ds_dir = dataset_dir(ds,config)
+    ds_meta_file = os.path.join(ds_dir,"dataset-metadata.json")
+    with open(ds_meta_file) as f:
+        return json.load(f)
 
 
 def msconvert_input_file(wildcards,config):
     ds = wildcards.ds
     ds_fmt = config["datasets"][ds]["fmt"]
-    lc_ds_fmt = ds_fmt.lower()
 
-    comet_fmts = [x.lower()
-        for x in config["software"]["comet"]["fmts"]]
-    msconvert_fmts = [x.lower()
-        for x in config["software"]["msconvert"]["fmts"]]
-
-    if lc_ds_fmt in msconvert_fmts:
-        msconvert_input = _get_input_file_by_format(ds_fmt,wildcards,config)
-    elif lc_ds_fmt in comet_fmts:  # i.e. no need to run msconvert
+    if _is_msconvert_fmt(ds_fmt,config):
+        msconvert_input = sample_data_file(wildcards,config)
+    elif _is_comet_fmt(ds_fmt,config):  # i.e. no need to run msconvert
         msconvert_input = ""
     else:
         raise ValueError(
@@ -181,3 +216,73 @@ def msconvert_input_file(wildcards,config):
 
 def msconvert_output_pattern(config):
     return os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
+
+
+def sample_data_file(wildcards,config):
+    ds = wildcards.ds
+    sample = wildcards.sample
+    ds_meta = dataset_metadata(ds,config)
+    sample_meta = ds_meta["samples"][sample]
+    if "url" in sample_meta:
+        file_name = url_basename(sample_meta["url"])
+        ds_dir = dataset_dir(ds,config)
+        input_file = os.path.join(ds_dir,file_name)
+    elif "path" in sample_meta:
+        input_file = sample_meta["path"]
+    else:
+        raise ValueError(
+            "cannot get local file for sample: '{}'".format(sample))
+    return input_file
+
+
+def sync_dataset_metadata(ds,config):
+    ds_dir = dataset_dir(ds,config)
+    ds_meta_file = os.path.join(ds_dir,"dataset-metadata.json")
+    try:
+        with open(ds_meta_file) as f:
+            ds_meta = json.load(f)
+    except FileNotFoundError:
+        update_needed = True
+    else:
+        config_changed = ds_meta["config"] != config["datasets"][ds]
+
+        meta_file_mtime = os.path.getmtime(ds_meta_file)
+        ds_src = dataset_source(ds,config)
+        if ds_src == "local":
+            latest_mtime = max([os.path.getmtime(os.path.join(ds_dir,x))
+                                for x in os.listdir(ds_dir)])
+        elif ds_src == "PRIDE":
+            # Take README 'last-modified' time as representative,
+            # as it contains metadata on the other dataset files.
+            readme_url = _pride_dataset_readme_url(ds,ds_meta)
+            mtime_info = _pride_file_mtime_info([readme_url])
+            latest_mtime = mtime_info[readme_url]
+        else:
+            raise ValueError(
+                "unsupported proteomics data source: '{}'".format(ds_src))
+
+        update_needed = config_changed or meta_file_mtime < latest_mtime
+
+    if update_needed:
+        _make_ds_meta_file(ds,config,ds_meta_file)
+
+
+def sync_sample_proxy_files(ds,config):
+    ds_dir = dataset_dir(ds,config)
+    if os.path.exists(ds_dir):
+        for item_name in os.listdir(ds_dir):
+            item_path = os.path.join(ds_dir,item_name)
+            if os.path.isfile(item_path) and item_path.endswith("_proxy.json"):
+                os.remove(item_path)
+    if dataset_source(ds,config) != "local":
+        os.makedirs(ds_dir,exist_ok=True)
+        ds_meta = dataset_metadata(ds,config)
+        for sample,sample_meta in ds_meta["samples"].items():
+            file_url = sample_meta["url"]
+            mod_dt = _utc_strptime(sample_meta["last-modified"])
+            file_mtime = timegm(mod_dt.timetuple())
+            proxy_file_name = "{}_proxy.json".format(url_basename(file_url))
+            proxy_file_path = os.path.join(ds_dir,proxy_file_name)
+            with open(proxy_file_path,"w") as f:
+                json.dump(sample_meta,f)
+            os.utime(proxy_file_path,(time.time(),file_mtime))
