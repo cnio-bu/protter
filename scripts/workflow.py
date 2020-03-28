@@ -244,24 +244,25 @@ def sync_dataset_metadata(ds,config):
     except FileNotFoundError:
         update_needed = True
     else:
-        config_changed = ds_meta["config"] != config["datasets"][ds]
-
-        meta_file_mtime = os.path.getmtime(ds_meta_file)
-        ds_src = dataset_source(ds,config)
-        if ds_src == "local":
-            latest_mtime = max([os.path.getmtime(os.path.join(ds_dir,x))
-                                for x in os.listdir(ds_dir)])
-        elif ds_src == "PRIDE":
-            # Take README 'last-modified' time as representative,
-            # as it contains metadata on the other dataset files.
-            readme_url = _pride_dataset_readme_url(ds,ds_meta)
-            mtime_info = _pride_file_mtime_info([readme_url])
-            latest_mtime = mtime_info[readme_url]
+        if ds_meta["config"] != config["datasets"][ds]:
+            update_needed = True
         else:
-            raise ValueError(
-                "unsupported proteomics data source: '{}'".format(ds_src))
+            meta_file_mtime = os.path.getmtime(ds_meta_file)
+            ds_src = dataset_source(ds,config)
+            if ds_src == "local":
+                latest_mtime = max([os.path.getmtime(os.path.join(ds_dir,x))
+                                    for x in os.listdir(ds_dir)])
+            elif ds_src == "PRIDE":
+                # Take README 'last-modified' time as representative,
+                # as it contains metadata on the other dataset files.
+                readme_url = _pride_dataset_readme_url(ds,ds_meta)
+                mtime_info = _pride_file_mtime_info([readme_url])
+                latest_mtime = mtime_info[readme_url]
+            else:
+                raise ValueError(
+                    "unsupported proteomics data source: '{}'".format(ds_src))
 
-        update_needed = config_changed or meta_file_mtime < latest_mtime
+            update_needed = meta_file_mtime < latest_mtime
 
     if update_needed:
         _make_ds_meta_file(ds,config,ds_meta_file)
