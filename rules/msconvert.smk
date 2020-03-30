@@ -8,7 +8,8 @@ rule msconvert:
         e="log/msconvert/{ds}/{sample}.err"
     threads: 1
     resources:
-        mem = 8000
+        mem = 8000,
+        msconvert_slots = 1
     shell:"""
         echo [$(date --iso-8601=s)] {rule} starting | tee {log.o} {log.e}
 
