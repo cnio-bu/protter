@@ -20,7 +20,8 @@ rule download_sample:
         e="log/download_sample/{ds}/{sample}.{fmt}{gzip_ext}.err"
     threads: 1
     resources:
-        mem = 1000
+        mem = 1000,
+        percent_bandwidth = 20
     wildcard_constraints:
         gzip_ext="(\.gz)?"
     shell:"""
