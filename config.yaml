@@ -41,7 +41,7 @@ dbs:
         enabled: False
 
 grouping_default:
-    single: 'os.path.splitext(x)[0]'
+    single: 'split_gzip_ext(x)[0]'
 
 dataset_path: "res/data/prot"
 
