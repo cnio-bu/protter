@@ -14,7 +14,7 @@ rule comet:
         o="log/{db}/comet/{ds}/{sample}.{td}.out",
         e="log/{db}/comet/{ds}/{sample}.{td}.err"
     benchmark:
-        "benchmark/{db}/comet/{ds}/{sample}.{td}.tsv",
+        "log/{db}/comet/{ds}/{sample}.{td}.bmk",
     params:
         basename="out/{db}/comet/{ds}/{sample}.{td}"
     threads: config["software"]["comet"]["threads"]

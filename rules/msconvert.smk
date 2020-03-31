@@ -7,7 +7,7 @@ rule msconvert:
         o="log/msconvert/{ds}/{sample}.out",
         e="log/msconvert/{ds}/{sample}.err"
     benchmark:
-        "benchmark/msconvert/{ds}/{sample}.tsv",
+        "log/msconvert/{ds}/{sample}.bmk",
     threads: 1
     resources:
         mem = 8000,

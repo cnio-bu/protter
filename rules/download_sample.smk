@@ -19,7 +19,7 @@ rule download_sample:
         o="log/download_sample/{ds}/{sample}.{fmt}{gzip_ext}.out",
         e="log/download_sample/{ds}/{sample}.{fmt}{gzip_ext}.err"
     benchmark:
-        "benchmark/download_sample/{ds}/{sample}.{fmt}{gzip_ext}.tsv",
+        "log/download_sample/{ds}/{sample}.{fmt}{gzip_ext}.bmk",
     threads: 1
     resources:
         mem = 1000,
