@@ -29,6 +29,14 @@ def _is_msconvert_fmt(fmt,config):
     return regex.match(fmt) is not None
 
 
+def _iter_list_file(file_path):
+    with open(file_path) as f:
+        for line in f:
+            contents = line.strip()
+            if contents:
+                yield contents
+
+
 def _make_ds_meta_file(ds,config,ds_meta_file):
     ds_fmt_regex = _get_fmt_regex([config["datasets"][ds]["fmt"]])
     ds_src = dataset_source(ds,config)
@@ -179,6 +187,12 @@ def comet_input_file(wildcards,config):
     return input_file
 
 
+def dataset_dbs(ds,config):
+    return [db for db in config["dbs"]
+            if config["dbs"][db]["enabled"]
+            and db in config["datasets"][ds]["dbs"]]
+
+
 def dataset_dir(ds,config):
     return os.path.join(config["dataset_path"],ds)
 
@@ -192,11 +206,57 @@ def dataset_groupings(ds,config):
     return groupings
 
 
-def dataset_metadata(ds,config):
+def dataset_metadata(ds,subset,config):
     ds_dir = dataset_dir(ds,config)
     ds_meta_file = os.path.join(ds_dir,"dataset-metadata.json")
     with open(ds_meta_file) as f:
-        return json.load(f)
+        ds_meta = json.load(f)
+    if subset != "all":
+        try:
+            ds_conf = config["datasets"][ds]
+        except KeyError:
+            raise ValueError("dataset not configured: '{}'".format(ds))
+        try:
+            subset_conf = ds_conf["subsets"][subset]
+        except KeyError:
+            raise ValueError("subset not configured: '{}'".format(subset))
+        try:
+            sample_file = subset_conf["samples"]
+        except KeyError:
+            raise ValueError(
+                "sample file not configured for subset: '{}'".format(subset))
+        subset_meta = {}
+        for sample in _iter_list_file(sample_file):
+            try:
+                subset_meta[sample] = ds_meta["samples"][sample]
+            except KeyError:
+                raise ValueError("unknown sample: '{}'".format(sample))
+        ds_meta["samples"] = subset_meta
+    return ds_meta
+
+
+def dataset_subsets(ds,config):
+    if "subsets" in config["datasets"][ds]:
+        subsets = list(config["datasets"][ds]["subsets"].keys())
+        if "all" in subsets and "samples" in subsets["all"]:
+            raise ValueError("cannot configure samples for subset 'all'")
+    else:
+        subsets = ["all"]
+    return subsets
+
+
+def get_samples(ds,subset,grouping,config):
+    #get the grouping statement from the config file and create a "gf" function with it
+    exec('gf = lambda x: {}'.format(dataset_groupings(ds,config)[grouping]), globals())
+    groups = {}
+    ds_meta = dataset_metadata(ds,subset,config)
+    for f in ds_meta["samples"].keys():
+        g = gf(f)
+        try:
+            groups[g].append(f)
+        except KeyError:
+            groups[g] = [f]
+    return groups
 
 
 def msconvert_input_file(wildcards,config):
@@ -218,10 +278,17 @@ def msconvert_output_pattern(config):
     return os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
 
 
+def percolator_input_files(wc,config):
+    group_to_samples = get_samples(wc.ds,wc.subset,wc.grouping,config)
+    return ["out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin".format(
+            db=wc.db,ds=wc.ds,subset=wc.subset,sample=sample,sdb=wc.sdb)
+            for sample in group_to_samples[wc.group]]
+
+
 def sample_data_file(wildcards,config):
     ds = wildcards.ds
     sample = wildcards.sample
-    ds_meta = dataset_metadata(ds,config)
+    ds_meta = dataset_metadata(ds,"all",config)
     sample_meta = ds_meta["samples"][sample]
     if "url" in sample_meta:
         file_name = url_basename(sample_meta["url"])
@@ -277,7 +344,7 @@ def sync_sample_proxy_files(ds,config):
                 os.remove(item_path)
     if dataset_source(ds,config) != "local":
         os.makedirs(ds_dir,exist_ok=True)
-        ds_meta = dataset_metadata(ds,config)
+        ds_meta = dataset_metadata(ds,"all",config)
         for sample,sample_meta in ds_meta["samples"].items():
             file_url = sample_meta["url"]
             mod_dt = _utc_strptime(sample_meta["last-modified"])

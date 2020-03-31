@@ -5,18 +5,18 @@ rule comet:
     input:
         data=comet_input_file,
         db="out/{db}/db/{td}.fasta",
-        params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds)
+        params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds,subset=wc.subset)
     output:
-        par="out/{db}/comet/{ds}/{sample}.{td}/comet.params.txt",
-        pin="out/{db}/comet/{ds}/{sample}.{td}/comet.target.pin",
-        log="out/{db}/comet/{ds}/{sample}.{td}/comet.log.txt"
+        par="out/{db}/comet/{ds}/{subset}/{sample}.{td}/comet.params.txt",
+        pin="out/{db}/comet/{ds}/{subset}/{sample}.{td}/comet.target.pin",
+        log="out/{db}/comet/{ds}/{subset}/{sample}.{td}/comet.log.txt"
     log:
-        o="log/{db}/comet/{ds}/{sample}.{td}.out",
-        e="log/{db}/comet/{ds}/{sample}.{td}.err"
+        o="log/{db}/comet/{ds}/{subset}/{sample}.{td}.out",
+        e="log/{db}/comet/{ds}/{subset}/{sample}.{td}.err"
     benchmark:
-        "log/{db}/comet/{ds}/{sample}.{td}.bmk",
+        "log/{db}/comet/{ds}/{subset}/{sample}.{td}.bmk",
     params:
-        basename="out/{db}/comet/{ds}/{sample}.{td}"
+        basename="out/{db}/comet/{ds}/{subset}/{sample}.{td}"
     threads: config["software"]["comet"]["threads"]
     conda:
         "../envs/environment.yaml"
@@ -31,11 +31,11 @@ rule split_pins:
         Split the comet output files by db. Merge targets and decoys.
     '''
     input:
-        pins=["out/{{db}}/comet/{{ds}}/{{sample}}.{td}/comet.target.pin".format(td=td) for td in ['target','decoy']]
+        pins=["out/{{db}}/comet/{{ds}}/{{subset}}/{{sample}}.{td}/comet.target.pin".format(td=td) for td in ['target','decoy']]
     output:
-        pin="out/{db}/split_pins/{ds}/{sample}.{sdb}.pin"
+        pin="out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin"
     log:
-        o="log/{db}/split_pins/{ds}/{sample}.{sdb}.out"
+        o="log/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.out"
     resources:
         mem = 8000
     threads: 1
