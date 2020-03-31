@@ -9,6 +9,8 @@ rule process_db:
         "../envs/environment.yaml"
     log:
         o="log/process_db/{db}.out"
+    benchmark:
+        "benchmark/process_db/{db}.tsv",
     script:
         "../scripts/process_db.py"
 
@@ -24,6 +26,8 @@ rule add_decoys:
     log:
         o="log/add_decoys/{db}.out",
         e="log/add_decoys/{db}.err"
+    benchmark:
+        "benchmark/add_decoys/{db}.tsv",
     params:
         tmp="out/{db}/db/decoyPYrat.tmp.fasta"
     conda:

@@ -6,6 +6,8 @@ rule msconvert:
     log:
         o="log/msconvert/{ds}/{sample}.out",
         e="log/msconvert/{ds}/{sample}.err"
+    benchmark:
+        "benchmark/msconvert/{ds}/{sample}.tsv",
     threads: 1
     resources:
         mem = 8000,

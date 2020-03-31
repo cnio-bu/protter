@@ -11,6 +11,8 @@ rule percolator:
     log:
         o="log/{db}/percolator/{ds}/{em}/{grouping}/{group}.{sdb}.out",
         e="log/{db}/percolator/{ds}/{em}/{grouping}/{group}.{sdb}.err"
+    benchmark:
+        "benchmark/{db}/percolator/{ds}/{em}/{grouping}/{group}.{sdb}.tsv",
     conda:
         "../envs/environment.yaml"
     threads: 1

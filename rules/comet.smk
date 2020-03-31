@@ -13,6 +13,8 @@ rule comet:
     log:
         o="log/{db}/comet/{ds}/{sample}.{td}.out",
         e="log/{db}/comet/{ds}/{sample}.{td}.err"
+    benchmark:
+        "benchmark/{db}/comet/{ds}/{sample}.{td}.tsv",
     params:
         basename="out/{db}/comet/{ds}/{sample}.{td}"
     threads: config["software"]["comet"]["threads"]
