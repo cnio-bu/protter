@@ -154,3 +154,4 @@ software:
         modes:
             - mix-max
             #- tdc
+        pep_cutoff: 0.001

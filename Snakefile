@@ -37,7 +37,7 @@ def input_crux_percolator():
                         for em in config["software"]["percolator"]["modes"]:
                             for sdb in config["dbs"][db]["paths"]:
                                 yield os.path.join("out",db,"percolator",ds,subset,em,grouping,
-                                                   group,sdb,"percolator.target.peptides.txt")
+                                                   group,sdb,"percolator.target.psms.proc.txt")
 
 
 rule all:
@@ -53,3 +53,4 @@ include: "rules/msconvert.smk"
 include: "rules/procdb.smk"
 include: "rules/comet.smk"
 include: "rules/percolator.smk"
+include: "rules/process_psms.smk"

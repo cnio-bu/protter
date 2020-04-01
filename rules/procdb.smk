@@ -4,7 +4,8 @@ rule process_db:
     params:
         dbs=lambda wc: [k for k in config["dbs"][wc.db]["paths"]]
     output:
-        db="out/{db}/db/target.fasta"
+        db="out/{db}/db/target.fasta",
+        meta_file="out/{db}/db/target_metadata.tsv"
     conda:
         "../envs/environment.yaml"
     log:

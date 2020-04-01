@@ -5,7 +5,7 @@ rule percolator:
     input:
         files=percolator_input_files
     output:
-        f="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.target.peptides.txt"
+        f="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.target.psms.txt"
     params:
         d="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}"
     log:
