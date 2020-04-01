@@ -9,7 +9,7 @@ seq_db = snakemake.wildcards.sdb
 
 if seq_db == "gencode":
     prot_to_gene = dict()
-    with open(snakemake.input.metafile,"r") as mfh:
+    with open(snakemake.input.meta_file,"r") as mfh:
         reader = csv.DictReader(mfh,dialect="excel-tab")
         for counter,row in enumerate(reader,start=1):
             if row["db_name"] == "gencode":
