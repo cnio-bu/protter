@@ -1,10 +1,17 @@
 dbs:
+    GENCODEv33_20200420:
+        paths:
+            crud: res/data/seq/crud/crud.fasta
+            gencode: res/data/seq/gencode/gencode.v33.pc_translations.fa
+            ncx: res/data/seq/ncx/NC-xcheck.fa
+        tax: human
+        enabled: True
     GENCODEv33:
         paths:
             crud: res/data/seq/crud/crud.fasta
             gencode: res/data/seq/gencode/gencode.v33.pc_translations.fa
         tax: human
-        enabled: True
+        enabled: False
     GUR:
         paths:
             crap: res/data/seq/crap/crap.fasta
