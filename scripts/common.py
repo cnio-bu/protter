@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from urllib.parse import urlparse
+from urllib.parse import unquote,urlparse
 
 
 def dataset_source(ds,config):
@@ -20,7 +20,8 @@ def split_gzip_ext(file_path):
 
 def url_basename(url):
     parsed_url = urlparse(url,allow_fragments=False)
-    url_path_parts = parsed_url.path.split("/")
+    parsed_path = unquote(parsed_url.path)
+    url_path_parts = parsed_path.split("/")
     basename = url_path_parts[-1]
     if not basename:
         raise ValueError("failed to get basename of URL: '{}'".format(url))
