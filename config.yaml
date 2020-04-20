@@ -57,8 +57,27 @@ datasets:
             pub: https://doi.org/10.15252/msb.20188503
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD010154
         subsets:
+            arg-c:
+                samples: res/conf/subsets/PXD010154/arg-c.txt
+                enzyme: arg-c
+            asp-n:
+                samples: res/conf/subsets/PXD010154/asp-n.txt
+                enzyme: asp-n
+            chymotrypsin:
+                samples: res/conf/subsets/PXD010154/chymotrypsin.txt
+                enzyme: chymotrypsin
+            glu-c:
+                samples: res/conf/subsets/PXD010154/glu-c.txt
+                enzyme: glu-c
+            lys-c:
+                samples: res/conf/subsets/PXD010154/lys-c.txt
+                enzyme: lys-c
+            lys-n:
+                samples: res/conf/subsets/PXD010154/lys-n.txt
+                enzyme: lys-n
             trypsin:
                 samples: res/conf/subsets/PXD010154/trypsin.txt
+                enzyme: trypsin
     sabido:
         enabled: False
         dbs:
@@ -151,6 +170,15 @@ software:
             private_key: /home/remote_user/.ssh/id_rsa
         fmts: [raw]
     percolator:
+        default_enzyme: trypsin
+        enzymes:
+            - arg-c
+            - asp-n
+            - chymotrypsin
+            - glu-c
+            - lys-c
+            - lys-n
+            - trypsin
         modes:
             - mix-max
             #- tdc

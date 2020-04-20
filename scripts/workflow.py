@@ -278,6 +278,31 @@ def msconvert_output_pattern(config):
     return os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
 
 
+def percolator_enzyme(wildcards,config):
+    ds = wildcards.ds
+    subset = wildcards.subset
+    try:
+        ds_conf = config["datasets"][ds]
+    except KeyError:
+        raise ValueError("dataset not configured: '{}'".format(ds))
+    default_enzyme = config["software"]["percolator"]["default_enzyme"]
+    try:
+        subset_conf = ds_conf["subsets"][subset]
+    except KeyError:
+        if subset == "all":
+            enzyme = default_enzyme
+        else:
+            raise ValueError("subset not configured: '{}'".format(subset))
+    else:
+        try:
+            enzyme = subset_conf["enzyme"]
+        except KeyError:
+            enzyme = default_enzyme
+    if enzyme not in config["software"]["percolator"]["enzymes"]:
+        raise ValueError("unknown enzyme: '{}'".format(enzyme))
+    return enzyme
+
+
 def percolator_input_files(wc,config):
     group_to_samples = get_samples(wc.ds,wc.subset,wc.grouping,config)
     return ["out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin".format(

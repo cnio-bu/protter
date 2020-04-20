@@ -8,6 +8,7 @@ from scripts.workflow import (comet_input_file,
                               get_samples,
                               msconvert_input_file,
                               msconvert_output_pattern,
+                              percolator_enzyme,
                               percolator_input_files,
                               sync_dataset_metadata,
                               sync_sample_proxy_files)
@@ -22,6 +23,7 @@ msconvert_input_file = partial(msconvert_input_file, config=config)
 msconvert_output_pattern = partial(msconvert_output_pattern, config=config)
 comet_input_file = partial(comet_input_file, config=config)
 percolator_input_files = partial(percolator_input_files, config=config)
+percolator_enzyme = partial(percolator_enzyme, config=config)
 
 
 def input_crux_percolator():
