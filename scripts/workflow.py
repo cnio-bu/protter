@@ -10,6 +10,7 @@ import time
 from urllib.parse import urlparse,urlunparse
 
 import requests
+import snakemake
 
 from .common import dataset_source,split_gzip_ext,url_basename
 
@@ -245,6 +246,23 @@ def dataset_subsets(ds,config):
     return subsets
 
 
+def download_sample_output_pattern(config):
+    out_patt = os.path.join(config["dataset_path"],"{ds}","{sample}.{fmt}{gzip_ext}")
+
+    try:
+        output_flags = config["rules"]["download_sample"]["output"]["flags"]
+    except KeyError:
+        output_flags = []
+
+    # Call the flag functions right-to-left, as
+    # if in a series of nested function calls.
+    for flag_name in reversed(output_flags):
+        flag_func = getattr(snakemake.io, flag_name)
+        out_patt = flag_func(out_patt)
+
+    return out_patt
+
+
 def get_samples(ds,subset,grouping,config):
     #get the grouping statement from the config file and create a "gf" function with it
     exec('gf = lambda x: {}'.format(dataset_groupings(ds,config)[grouping]), globals())
@@ -275,7 +293,20 @@ def msconvert_input_file(wildcards,config):
 
 
 def msconvert_output_pattern(config):
-    return os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
+    out_patt = os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
+
+    try:
+        output_flags = config["rules"]["msconvert"]["output"]["flags"]
+    except KeyError:
+        output_flags = []
+
+    # Call the flag functions right-to-left, as
+    # if in a series of nested function calls.
+    for flag_name in reversed(output_flags):
+        flag_func = getattr(snakemake.io, flag_name)
+        out_patt = flag_func(out_patt)
+
+    return out_patt
 
 
 def percolator_enzyme(wildcards,config):

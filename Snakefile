@@ -5,6 +5,7 @@ from scripts.workflow import (comet_input_file,
                               dataset_groupings,
                               dataset_dbs,
                               dataset_subsets,
+                              download_sample_output_pattern,
                               get_samples,
                               msconvert_input_file,
                               msconvert_output_pattern,
@@ -19,6 +20,7 @@ configfile: os.path.join(workflow.basedir, "config.yaml")
 config["dataset_path"] = os.path.relpath(os.path.join(
     workflow.basedir, config["dataset_path"]))
 
+download_sample_output_pattern = partial(download_sample_output_pattern, config=config)
 msconvert_input_file = partial(msconvert_input_file, config=config)
 msconvert_output_pattern = partial(msconvert_output_pattern, config=config)
 comet_input_file = partial(comet_input_file, config=config)

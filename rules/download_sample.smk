@@ -12,7 +12,7 @@ rule download_sample:
     input:
         proxy_file=config["dataset_path"] + "/{ds}/{sample}.{fmt}{gzip_ext}_proxy.json"
     output:
-        data_file=temp(config["dataset_path"] + "/{ds}/{sample}.{fmt}{gzip_ext}")
+        data_file=download_sample_output_pattern()
     params:
         meta=load_sample_metadata
     log:

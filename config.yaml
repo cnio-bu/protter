@@ -152,6 +152,16 @@ datasets:
         dbs:
             - GENCODEv29
 
+
+rules:
+    msconvert:
+        output:
+            flags: [temp]
+    download_sample:
+        output:
+            flags: [temp]
+
+
 software:
     comet:
         params: res/conf/comet/comet.params.{ds}.{subset}.conf
