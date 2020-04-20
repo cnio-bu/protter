@@ -9,10 +9,27 @@ log () {
 }
 
 usage_error () {
-  echo "usage: $0 file_url file_path" >&2
+  echo "usage: $0 -b <bandwidth_limit> file_url file_path" >&2
   exit 1
 }
 
+while getopts ":b:" opt; do
+  case ${opt} in
+    b ) bandwidth="$OPTARG"
+      ;;
+    \? ) usage_error
+      ;;
+    : ) usage_error
+      ;;
+  esac
+done
+
+if [[ ! -z "$bandwidth" ]]
+then bandwidth_param="--limit-rate=${bandwidth}m"
+else bandwidth_param=""
+fi
+
+shift "$((OPTIND-1))"
 if [[ $# -ne 2 ]]
 then usage_error
 fi
@@ -36,7 +53,7 @@ trap "{ rm -rf $TWD; }" EXIT
 
 log "downloading file: '$in_file_url'"
 tmp_file_path="$TWD/$out_file_name"
-wget --quiet --limit-rate=10m --random-wait --wait=97 \
+wget --quiet "$bandwidth_param" --random-wait --wait=97 \
   "$in_file_url" -O "$tmp_file_path"
 
 log "moving downloaded file to: '$out_file_path'"

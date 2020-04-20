@@ -23,10 +23,11 @@ rule download_sample:
     threads: 1
     resources:
         mem = 1000,
-        percent_bandwidth = 20
+        bandwidth=2  # MB/s
     wildcard_constraints:
         gzip_ext="(\.gz)?"
     shell:"""
-        bash scripts/download_file.sh {params[meta][url]} {output.data_file} \
+        bash scripts/download_file.sh -b {resources.bandwidth} \
+          {params[meta][url]} {output.data_file} \
           1>{log.o} 2>{log.e}
     """
