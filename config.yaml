@@ -56,7 +56,7 @@ datasets:
     PXD010154:
         source: PRIDE
         project_accession: PXD010154
-        enabled: True
+        enabled: False
         fmt: raw
         dbs:
             - GENCODEv33
@@ -101,10 +101,10 @@ datasets:
         dbs:
             - GENCODEv27
     kim_2014:
-        enabled: False
+        enabled: True
         fmt: mzML
         dbs:
-            - GUR
+            - GENCODEv33_20200420
         urls:
             pub: https://www.nature.com/articles/nature13302
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
