@@ -21,7 +21,8 @@ rule comet:
     conda:
         "../envs/environment.yaml"
     resources:
-        mem = lambda wildcards, attempt: attempt * 8000
+        mem = lambda wildcards, attempt: attempt * 8000,
+        time = lambda wildcards, attempt: attempt * 120
     shell:"""
         crux comet --num_threads {threads} --output_pepxmlfile 0 --output_txtfile 0 --output_percolatorfile 1 --parameter-file {input.params} --output-dir {params.basename} --overwrite T {input.data} {input.db} > {log.o} 2> {log.e}
     """

@@ -16,7 +16,8 @@ rule percolator:
         "../envs/environment.yaml"
     threads: 1
     resources:
-        mem = 34000
+        mem = 34000,
+        time = lambda wildcards, attempt: attempt * 480
     benchmark:
         "log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.bmk"
     script:
