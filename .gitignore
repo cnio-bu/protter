@@ -3,8 +3,10 @@ log
 log.txt*
 out
 *.swp
+profiles/*
 res/data/*
 res/conf/comet/*
+res/conf/subsets/*
 !res/conf/comet/comet.params.orbitrap.conf
 tmp
 jdk*
