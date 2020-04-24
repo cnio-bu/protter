@@ -66,6 +66,8 @@ echo "creating temp raw file: '$tmp_raw_file'"
 rsync -e "ssh -i $key_file" "$remote_addr:$raw_file_path" "$tmp_raw_file"
 
 echo "converting raw file: '$raw_file_name'"
+# use options -z and --gzip to compress output mzML file
+# use --singleThreaded for reasons discussed in: https://github.com/ProteoWizard/pwiz/issues/684
 docker run --rm -e WINEDEBUG=-all -v "$TWD":/data $pwiz_image \
   wine msconvert --mzML -z --gzip --singleThreaded "$raw_file_name"
 
