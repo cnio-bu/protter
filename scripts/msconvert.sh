@@ -51,7 +51,7 @@ echo "msconvert starting"
 
 echo "checking ProteoWizard Docker image: '$pwiz_image'"
 if [[ "$(docker images -q $pwiz_image 2>/dev/null)" == "" ]]
-then docker pull -q $pwiz_image
+then docker pull $pwiz_image
 fi
 
 # The ProteoWizard Docker image needs a writable output directory and
