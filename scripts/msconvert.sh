@@ -5,10 +5,12 @@ set -euo pipefail
 IFS=$'\n\t'
 
 usage_error() {
-  echo "usage: $0 -i key_file -r user@host pwiz_image raw_file mzml_file" >&2
+  echo "usage: $0 [-i key_file] [-r user@host] pwiz_image raw_file mzml_file" >&2
   exit 1
 }
 
+key_file=""
+remote_addr=""
 while getopts ":i:r:" opt; do
   case ${opt} in
     i ) key_file="$OPTARG"
@@ -31,8 +33,7 @@ pwiz_image=$1
 raw_file_path=$2
 mzml_file_path=$3
 
-if [[ -z "$key_file" || -z "$remote_addr" || \
-      -z "$pwiz_image" || -z "$raw_file_path" || -z "$mzml_file_path" ]]
+if [[ -z "$pwiz_image" || -z "$raw_file_path" || -z "$mzml_file_path" ]]
 then usage_error
 fi
 
@@ -46,6 +47,20 @@ fi
 
 raw_file_name=$(basename "$raw_file_path")
 mzml_file_name=$(basename "$mzml_file_path")
+
+if [[ ! -z "$key_file" ]]
+then ssh_params="ssh -i \"$key_file\""
+else ssh_params="ssh"
+fi
+
+if [[ ! -z "$remote_addr" ]]
+then
+  raw_file_loc="$remote_addr:$raw_file_path"
+  mzml_file_loc="$remote_addr:$mzml_file_path"
+else
+  raw_file_loc="$raw_file_path"
+  mzml_file_loc="$mzml_file_path"
+fi
 
 echo "msconvert starting"
 
@@ -63,7 +78,7 @@ chmod a+w "$TWD"
 
 tmp_raw_file="$TWD/$raw_file_name"
 echo "creating temp raw file: '$tmp_raw_file'"
-rsync -e "ssh -i $key_file" "$remote_addr:$raw_file_path" "$tmp_raw_file"
+rsync -e "$ssh_params" "$raw_file_loc" "$tmp_raw_file"
 
 echo "converting raw file: '$raw_file_name'"
 # use options -z and --gzip to compress output mzML file
@@ -77,7 +92,8 @@ gunzip -c "$tmp_mzml_file" | xmllint --stream --noout -
 
 echo "transferring mzML file '$mzml_file_name'"
 mzml_dir=$(dirname "$mzml_file_path")
-rsync -I -e "ssh -i $key_file" --rsync-path="mkdir -p $mzml_dir && rsync" \
-  "$tmp_mzml_file" "$remote_addr:$mzml_file_path"
+rsync -I -e "$ssh_params" \
+  --rsync-path="mkdir -p $mzml_dir && rsync" \
+  "$tmp_mzml_file" "$mzml_file_loc"
 
 echo "msconvert done"

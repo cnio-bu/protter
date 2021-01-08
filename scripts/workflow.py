@@ -1,4 +1,5 @@
 from calendar import timegm
+from collections import defaultdict
 import json
 import os
 import time
@@ -154,6 +155,26 @@ def msconvert_output_pattern(config):
         out_patt = flag_func(out_patt)
 
     return out_patt
+
+
+def msconvert_rule_config(config):
+    raw_config = config["software"]["msconvert"]
+    rule_config = defaultdict(str)
+
+    rule_config["docker_image"] = raw_config["docker_image"]
+    rule_config["docker_host"] = raw_config.get("docker_host","local")
+    if rule_config["docker_host"] != "local":
+        remote_host = raw_config["remote"]["hostname"]
+        remote_user = raw_config["remote"]["username"]
+        rule_config["remote_addr"] = "{}@{}".format(remote_user,remote_host)
+        rule_config["remote_key"] = raw_config["remote"].get("private_key","")
+
+        local_host = raw_config["local"]["hostname"]
+        local_user = raw_config["local"]["username"]
+        rule_config["local_addr"] = "{}@{}".format(local_user,local_host)
+        rule_config["local_key"] = raw_config["local"].get("private_key","")
+
+    return rule_config
 
 
 def percolator_enzyme(wildcards,config):

@@ -9,6 +9,7 @@ from scripts.workflow import (comet_input_file,
                               get_samples,
                               msconvert_input_file,
                               msconvert_output_pattern,
+                              msconvert_rule_config,
                               percolator_enzyme,
                               percolator_input_files,
                               sync_dataset_metadata,
@@ -23,6 +24,7 @@ config["dataset_path"] = os.path.relpath(os.path.join(
 download_sample_output_pattern = partial(download_sample_output_pattern, config=config)
 msconvert_input_file = partial(msconvert_input_file, config=config)
 msconvert_output_pattern = partial(msconvert_output_pattern, config=config)
+msconvert_rule_config = partial(msconvert_rule_config, config=config)
 comet_input_file = partial(comet_input_file, config=config)
 percolator_input_files = partial(percolator_input_files, config=config)
 percolator_enzyme = partial(percolator_enzyme, config=config)

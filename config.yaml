@@ -177,6 +177,7 @@ software:
         fmts: [cms2, ms2, mzML, mzXML]
     msconvert:
         docker_image: chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:latest
+        docker_host: remote
         local:
             hostname: local_host
             username: local_user
