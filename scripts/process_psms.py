@@ -1,13 +1,38 @@
 import csv
+import os
+import sys
 
+from common import get_group_enzyme,get_group_meta_value,load_sample_sheet
+
+
+input_psm_file = snakemake.input.psms
+output_psm_file = snakemake.output.psms
+target_meta_file = snakemake.input.target_meta_file
+sample_meta_file = snakemake.input.sample_meta_file
 
 pep_cutoff = snakemake.params.pep_cutoff
 seq_db = snakemake.wildcards.sdb
+ds = snakemake.wildcards.ds
+subset = snakemake.wildcards.subset
+grouping = snakemake.wildcards.grouping
+group = snakemake.wildcards.group
+
+default_enzyme = snakemake.config["software"]["percolator"]["default_enzyme"]
+
+# Short-circuit for empty PSM file.
+if os.stat(input_psm_file).st_size == 0:
+    with open(output_psm_file,"w") as ofh:
+        pass
+    sys.exit()
+
+samples = load_sample_sheet(sample_meta_file)
+enzyme = get_group_enzyme(ds,subset,grouping,group,samples,default=default_enzyme)
+tissue = get_group_meta_value(ds,subset,grouping,group,samples,"tissue")
 
 
 if seq_db == "gencode":
     prot_to_gene = dict()
-    with open(snakemake.input.meta_file,"r") as mfh:
+    with open(target_meta_file,"r") as mfh:
         reader = csv.DictReader(mfh,dialect="excel-tab")
         for counter,row in enumerate(reader,start=1):
             if row["db_name"] == "gencode":
@@ -17,20 +42,28 @@ if seq_db == "gencode":
                 prot_to_gene[protter_id] = bare_gene_id
 
 
-with open(snakemake.input.psms,"r") as ifh:
+with open(input_psm_file,"r") as ifh:
     reader = csv.DictReader(ifh,dialect="excel-tab")
     out_headings = reader.fieldnames
+    if enzyme is not None:
+        out_headings.append("enzyme")
     if seq_db == "gencode":
-        out_headings += ["gene id"]
-    with open(snakemake.output.psms,"w") as ofh:
+        out_headings.append("gene id")
+    if tissue is not None:
+        out_headings.append("tissue")
+    with open(output_psm_file,"w") as ofh:
         writer = csv.DictWriter(ofh,out_headings,dialect="excel-tab")
         writer.writeheader()
         for row in reader:
             pep_score = float(row["percolator PEP"])
             if pep_score <= pep_cutoff:
+                if enzyme is not None:
+                    row["enzyme"] = enzyme
                 if seq_db == "gencode":
                     prot_ids = row["protein id"].split(",")
                     gene_ids = [prot_to_gene[x] if x in prot_to_gene else "NA"
                                 for x in prot_ids]
                     row["gene id"] = ",".join(gene_ids)
+                if tissue is not None:
+                    row["tissue"] = tissue
                 writer.writerow(row)

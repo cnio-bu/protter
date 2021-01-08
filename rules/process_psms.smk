@@ -4,7 +4,8 @@ rule process_psms:
     '''
     input:
         psms="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.target.psms.txt",
-        meta_file="out/{db}/db/target_metadata.tsv"
+        target_meta_file="out/{db}/db/target_metadata.tsv",
+        sample_meta_file=config["samples"]
     output:
         psms="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.target.psms.proc.txt"
     params:

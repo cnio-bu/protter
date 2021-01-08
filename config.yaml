@@ -47,10 +47,13 @@ dbs:
         tax: human
         enabled: False
 
-grouping_default:
-    single: 'split_gzip_ext(x)[0]'
+
+default_groupings:
+    - single
 
 dataset_path: "res/data/prot"
+
+samples: "samples.tsv"
 
 datasets:
     PXD010154:
