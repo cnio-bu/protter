@@ -2,6 +2,9 @@ from tstk.io import parsefastx
 import csv
 import hashlib
 
+from common import open_as_text
+
+
 seen = set()
 
 counter = 0
@@ -12,7 +15,7 @@ with open(snakemake.output.db,"w") as ofh, open(snakemake.output.meta_file,"w") 
     meta_writer.writeheader()
     with open(snakemake.log.o,"w") as lfh:
         for db,fpath in zip(snakemake.params.dbs,snakemake.input.paths):
-            with open(fpath) as fh:
+            with open_as_text(fpath) as fh:
                 for r in parsefastx(fh):
                     counter += 1
 

@@ -1,5 +1,8 @@
 from calendar import timegm
+from contextlib import contextmanager
 from datetime import datetime,timezone
+import functools
+import gzip
 import os
 import re
 from urllib.parse import unquote,urlparse,urlunparse
@@ -250,6 +253,24 @@ def load_sample_sheet(file):
                           keep_default_na=False)
     return samples.set_index(["dataset","sample"],drop=False,
                              verify_integrity=True)
+
+
+@contextmanager
+def open_as_text(file,mode="r"):
+    if mode not in {"a","r","w","x"}:
+        raise ValueError("unknown file mode: '{}'".format(mode))
+    text_mode = mode + "t"
+    if str(file).lower().endswith(".gz"):
+        opener = functools.partial(gzip.open,mode=text_mode)
+    else:
+        opener = functools.partial(open,mode=text_mode)
+    file_obj = None
+    try:
+        file_obj = opener(file)
+        yield file_obj
+    finally:
+        if file_obj is not None:
+            file_obj.close()
 
 
 def query_pride_file_metadata(ds,config):
