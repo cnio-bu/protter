@@ -177,15 +177,30 @@ software:
         fmts: [cms2, ms2, mzML, mzXML]
     msconvert:
         docker_image: chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:latest
-        docker_host: remote
+
+        # Set Docker host to 'local' to run msconvert on the same machine as the
+        # main workflow; set to 'remote' to convert files on a different machine.
+        docker_host: local
+
+        # For 'remote' mode only: configure SSH connection
+        # from local machine to remote host, and vice versa.
         local:
+            # User and host name for local host.
             hostname: local_host
             username: local_user
+
+            # Path of private key file on local host,
+            # used to connect to the remote host.
             private_key: /home/local_user/.ssh/id_rsa
         remote:
+            # User and host name for local host.
             hostname: remote_host
             username: remote_user
+
+            # Path of private key file on the remote
+            # host, used to connect to the local host.
             private_key: /home/remote_user/.ssh/id_rsa
+
         fmts: [raw]
     percolator:
         default_enzyme: trypsin
