@@ -103,9 +103,11 @@ datasets:
         enabled: False
         dbs:
             - GENCODEv27
-    kim_2014:
+    PXD000561:  # kim_2014
+        source: PRIDE
+        project_accession: PXD000561
         enabled: True
-        fmt: mzML
+        fmt: raw
         dbs:
             - GENCODEv33_20200420
         urls:
