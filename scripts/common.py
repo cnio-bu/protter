@@ -128,7 +128,7 @@ def get_pride_dataset_readme_url(ds,ds_meta):
         file_url = sample_meta["url"]
         parsed_url = urlparse(file_url)
         url_path_parts = parsed_url.path.split("/")
-        ds_dir_path = "/".join(url_path_parts[:-1]) + "/"
+        ds_dir_path = "/".join(url_path_parts[:7]) + "/"
         pred_path = ds_dir_path + "README.txt"
         pred_url_attrs = parsed_url[:2] + (pred_path,) + parsed_url[3:]
         pred_url = urlunparse(pred_url_attrs)
@@ -153,7 +153,7 @@ def get_pride_dataset_url(ds,pride_proj_meta,pride_file_meta):
         file_url = rec["downloadLink"]
         parsed_url = urlparse(file_url)
         url_path_parts = parsed_url.path.split("/")
-        pred_path = "/".join(url_path_parts[:-1]) + "/"
+        pred_path = "/".join(url_path_parts[:7]) + "/"
         pred_url_attrs = parsed_url[:2] + (pred_path,) + parsed_url[3:]
         pred_url = urlunparse(pred_url_attrs)
         if pred_url != ds_url:
