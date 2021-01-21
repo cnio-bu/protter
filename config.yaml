@@ -1,11 +1,18 @@
 dbs:
+    GENCODEv36:
+        paths:
+            crud: res/data/seq/crud/crud.fasta.gz
+            gencode: res/data/seq/gencode/gencode.v36.pc_translations.fa.gz
+            upstream: res/data/seq/upstream/Sutured_upstream.faa.gz
+        tax: human
+        enabled: True
     GENCODEv33_20200420:
         paths:
             crud: res/data/seq/crud/crud.fasta
             gencode: res/data/seq/gencode/gencode.v33.pc_translations.fa
             ncx: res/data/seq/ncx/NC-xcheck.fa
         tax: human
-        enabled: True
+        enabled: False
     GENCODEv33:
         paths:
             crud: res/data/seq/crud/crud.fasta
