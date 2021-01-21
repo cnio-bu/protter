@@ -103,7 +103,7 @@ datasets:
         enabled: False
         dbs:
             - GENCODEv27
-    PXD000561:  # kim_2014
+    kim_2014:
         source: PRIDE
         project_accession: PXD000561
         enabled: True
