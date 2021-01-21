@@ -86,27 +86,31 @@ def get_dataset_metadata(ds,config):
 
 def get_group_enzyme(ds,subset,grouping,group,samples,default=None):
     group_samples = get_group_sample_meta(ds,subset,grouping,group,samples)
+
+    group_enzyme = default
     if "enzyme" in group_samples.columns:
         group_enzymes = set(group_samples["enzyme"].dropna())
-        if len(group_enzymes) != 1:
+        if len(group_enzymes) == 1:
+            group_enzyme = group_enzymes.pop()
+        elif len(group_enzymes) > 1:
             raise ValueError(
                 "enzyme not configured correctly for group: '{}'".format(group))
-        group_enzyme = group_enzymes.pop()
-    else:
-        group_enzyme = default
+
     return group_enzyme
 
 
 def get_group_meta_value(ds,subset,grouping,group,samples,meta_key,default=None):
     group_samples = get_group_sample_meta(ds,subset,grouping,group,samples)
+
+    meta_value = default
     if meta_key in group_samples.columns:
         meta_values = set(group_samples[meta_key].dropna())
-        if len(meta_values) != 1:
+        if len(meta_values) == 1:
+            meta_value = meta_values.pop()
+        elif len(meta_values) > 1:
             raise ValueError(
                 "'{}' metadata not configured correctly for group: '{}'".format(meta_key,group))
-        meta_value = meta_values.pop()
-    else:
-        meta_value = default
+
     return meta_value
 
 
