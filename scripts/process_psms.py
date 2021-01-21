@@ -30,24 +30,27 @@ enzyme = get_group_enzyme(ds,subset,grouping,group,samples,default=default_enzym
 tissue = get_group_meta_value(ds,subset,grouping,group,samples,"tissue")
 
 
-if seq_db == "gencode":
+if seq_db in ("gencode","upstream"):
     prot_to_gene = dict()
     with open(target_meta_file,"r") as mfh:
         reader = csv.DictReader(mfh,dialect="excel-tab")
         for counter,row in enumerate(reader,start=1):
-            if row["db_name"] == "gencode":
+            if seq_db == "gencode" and row["db_name"] == seq_db:
                 protter_id = "seq{}#gencode#".format(counter)
                 gene_id = row["db_seq_id"].split("|")[2]
+                bare_gene_id = gene_id.split(".",1)[0]
+                prot_to_gene[protter_id] = bare_gene_id
+            elif seq_db == "upstream" and row["db_name"] == seq_db:
+                protter_id = "seq{}#upstream#".format(counter)
+                gene_id = row["db_seq_id"].split("|")[0]
                 bare_gene_id = gene_id.split(".",1)[0]
                 prot_to_gene[protter_id] = bare_gene_id
 
 
 with open(input_psm_file,"r") as ifh:
     reader = csv.DictReader(ifh,dialect="excel-tab")
-    out_headings = reader.fieldnames
-    if enzyme is not None:
-        out_headings.append("enzyme")
-    if seq_db == "gencode":
+    out_headings = reader.fieldnames + ["enzyme"]
+    if seq_db in ("gencode","upstream"):
         out_headings.append("gene id")
     if tissue is not None:
         out_headings.append("tissue")
@@ -57,9 +60,8 @@ with open(input_psm_file,"r") as ifh:
         for row in reader:
             pep_score = float(row["percolator PEP"])
             if pep_score <= pep_cutoff:
-                if enzyme is not None:
-                    row["enzyme"] = enzyme
-                if seq_db == "gencode":
+                row["enzyme"] = enzyme
+                if seq_db in ("gencode","upstream"):
                     prot_ids = row["protein id"].split(",")
                     gene_ids = [prot_to_gene[x] if x in prot_to_gene else "NA"
                                 for x in prot_ids]
