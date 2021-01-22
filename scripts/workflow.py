@@ -1,5 +1,6 @@
 from calendar import timegm
 from collections import defaultdict
+from contextlib import suppress
 import json
 import os
 import shutil
@@ -258,9 +259,12 @@ def sync_dataset_metadata(ds,config):
             with open(ds_meta_file) as f:
                 ds_meta = json.load(f)
             if ds_meta["config"] != config["datasets"][ds]:
-                raise ValueError("")
+                raise ValueError("cannot sync dataset metadata - config modified")
         else:
             shutil.move(tmp_ds_meta_file,ds_meta_file)
+        finally:
+            with suppress(FileNotFoundError):
+                os.remove(tmp_ds_meta_file)
 
 
 def sync_sample_proxy_files(ds,config,samples):
