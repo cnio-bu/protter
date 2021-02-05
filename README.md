@@ -1,6 +1,8 @@
 # protter
 
-Pipeline to generate peptide-spectrum matches using different search engines against target and decoy databases.
+Pipeline to generate peptide-spectrum matches using different
+search engines against target and decoy databases. Input may
+be local or remote (see [Data sources](#data-sources)).
 
 Allows for the easy addition of datasets and search engines.
 
