@@ -5,6 +5,7 @@ import functools
 import gzip
 import os
 import re
+from time import sleep
 from urllib.parse import unquote,urlparse,urlunparse
 
 from dateutil.relativedelta import relativedelta
@@ -42,16 +43,16 @@ def get_dataset_metadata(ds,config):
 
         pride_proj_meta = query_pride_project_metadata(ds,config)
         pride_file_meta = query_pride_file_metadata(ds,config)
-        ds_url = get_pride_dataset_url(ds,pride_proj_meta,pride_file_meta)
+        ds_url = get_pride_dataset_url(ds,pride_proj_meta)
 
-        for rec in pride_file_meta["list"]:
+        for rec in pride_file_meta:
             sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
             file_fmt = file_ext[1:]
             if ds_fmt_regex.match(file_fmt):
                 if sample in ds_meta["samples"]:
                     raise ValueError("dataset '{}' has duplicate sample '{}'".format(ds,sample))
                 ds_meta["samples"][sample] = {
-                    "size": rec["fileSize"],
+                    "size": rec["fileSizeBytes"],
                     "url": ds_url + rec["fileName"]
                 }
 
@@ -141,27 +142,11 @@ def get_pride_dataset_readme_url(ds,ds_meta):
     return readme_url
 
 
-def get_pride_dataset_url(ds,pride_proj_meta,pride_file_meta):
+def get_pride_dataset_url(ds,pride_proj_meta):
 
     # The dataset name is not guaranteed to be the same as the PRIDE
     # project accession, so we take that from the project metadata.
     proj_ac = pride_proj_meta["accession"]
-
-    # Infer dataset URL from file metadata.
-    ds_url = None
-    for rec in pride_file_meta["list"]:
-        file_url = rec["downloadLink"]
-        parsed_url = urlparse(file_url)
-        url_path_parts = parsed_url.path.split("/")
-        pred_path = "/".join(url_path_parts[:7]) + "/"
-        pred_url_attrs = parsed_url[:2] + (pred_path,) + parsed_url[3:]
-        pred_url = urlunparse(pred_url_attrs)
-        if pred_url != ds_url:
-            if ds_url is None:
-                ds_url = pred_url
-            else:
-                raise ValueError(
-                    "failed to infer PRIDE project URL of dataset: '{}'".format(ds))
 
     # We start from the assumption that the URL reflects the date of publication, but
     # allow for the possibility that it has been revised any time between then and now.
@@ -181,6 +166,7 @@ def get_pride_dataset_url(ds,pride_proj_meta,pride_file_meta):
         if r.status_code == 200:
             break
         ds_date = ds_date + one_month
+        sleep(0.333)
 
     if ds_url is None:
         raise RuntimeError(
@@ -285,8 +271,8 @@ def query_pride_file_metadata(ds,config):
     except KeyError:
         proj_ac = ds
 
-    base_url = "http://www.ebi.ac.uk/pride/ws/archive"
-    request_url = "{}/file/list/project/{}".format(base_url,proj_ac)
+    base_url = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+    request_url = "{}/files/byProject?accession={}".format(base_url,proj_ac)
     response = requests.get(request_url)
 
     try:
@@ -311,8 +297,8 @@ def query_pride_project_metadata(ds,config):
         proj_ac = ds_conf["project_accession"]
     except KeyError:
         proj_ac = ds
-    base_url = "http://www.ebi.ac.uk/pride/ws/archive"
-    request_url = "{}/project/{}".format(base_url,proj_ac)
+    base_url = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+    request_url = "{}/projects/{}".format(base_url,proj_ac)
     response = requests.get(request_url)
 
     try:
