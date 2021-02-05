@@ -1,3 +1,12 @@
+The protter workflow software and documentation are made available under the
+MIT License below. However, please note that some dependencies of the workflow
+carry licenses that impose further restrictions, notably the vendor libraries
+used by ProteoWizard to convert mass spectrometry data from proprietary vendor
+formats to the standard mzML format. For more information, see the dependency
+information in the workflow README file.
+
+---
+
 MIT License
 
 Copyright (c) 2019 Tomás Di Domenico
