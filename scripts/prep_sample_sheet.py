@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Initialise workflow sample sheet file.
+"""Prepare workflow sample sheet file.
 
-This is intended to create an initial sample sheet file,
-but you should always review the file before using it,
-and you may need to make further changes.
+This is primarily intended to create an initial sample
+sheet file, but you should always review the file before
+using it, and you may need to make further changes.
 """
 
 from argparse import ArgumentParser
