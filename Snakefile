@@ -1,19 +1,22 @@
 from functools import partial
 import os
 
-from scripts.common import get_samples,load_sample_sheet
+from scripts.common import (get_samples,
+                            load_sample_sheet,
+                            pull_download_sheet)
+
 from scripts.workflow import (comet_input_file,
                               dataset_groupings,
                               dataset_dbs,
                               dataset_subsets,
+                              download_sample_file_checksum,
+                              download_sample_file_url,
                               download_sample_output_pattern,
                               msconvert_input_file,
                               msconvert_output_pattern,
                               msconvert_rule_config,
                               percolator_enzyme,
-                              percolator_input_files,
-                              sync_dataset_metadata,
-                              sync_sample_proxy_files)
+                              percolator_input_files)
 
 
 configfile: os.path.join(workflow.basedir, "config.yaml")
@@ -23,7 +26,14 @@ config["dataset_path"] = os.path.relpath(os.path.join(
 
 sample_file = config["samples"]
 samples = load_sample_sheet(sample_file)
+downloads = pull_download_sheet(samples)
 
+wildcard_constraints:
+    dl_file = "|".join(downloads["dl_file"]),
+    sample = "|".join(samples["sample"])
+
+download_sample_file_checksum = partial(download_sample_file_checksum, downloads=downloads)
+download_sample_file_url = partial(download_sample_file_url, downloads=downloads)
 download_sample_output_pattern = partial(download_sample_output_pattern, config=config)
 msconvert_input_file = partial(msconvert_input_file, config=config, samples=samples)
 msconvert_output_pattern = partial(msconvert_output_pattern, config=config)
@@ -37,8 +47,8 @@ def input_crux_percolator():
     for ds in config["datasets"]:
         if not config["datasets"][ds]["enabled"]:
             continue
-        sync_dataset_metadata(ds,config)
-        sync_sample_proxy_files(ds,config,samples)
+        if ds not in samples["dataset"].unique():
+            continue
         for subset in dataset_subsets(ds,samples):
             for grouping in dataset_groupings(ds,config):
                 for group in get_samples(ds,subset,grouping,samples):

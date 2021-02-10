@@ -18,11 +18,14 @@ def init_sample_metadata(ds,config):
     recs = list()
     ds_meta = get_dataset_metadata(ds,config)
     for sample in sorted(ds_meta["samples"].keys()):
+        sample_meta = ds_meta["samples"][sample]
         recs.append({
             "dataset": ds,
-            "sample": sample
+            "sample": sample,
+            "file": sample_meta["file"],
+            "checksum": sample_meta.get("checksum",pd.NA)
         })
-    col_names = ["dataset","sample"]
+    col_names = ["dataset","sample","file","checksum"]
     return pd.DataFrame(recs,columns=col_names,dtype="string")
 
 

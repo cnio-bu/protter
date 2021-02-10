@@ -7,3 +7,5 @@ dependencies:
     - tstk
     - crux-toolkit
     - decoypyrat
+    - rhash
+    - wget

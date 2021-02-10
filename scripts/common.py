@@ -5,10 +5,8 @@ import functools
 import gzip
 import os
 import re
-from time import sleep
 from urllib.parse import unquote,urlparse,urlunparse
 
-from dateutil.relativedelta import relativedelta
 import pandas as pd
 import requests
 import yaml
@@ -32,40 +30,41 @@ def get_dataset_metadata(ds,config):
 
     ds_fmt_regex = _get_fmt_regex([config["datasets"][ds]["fmt"]])
     ds_src = dataset_source(ds,config)
-    ds_dir = dataset_dir(ds,config)
 
     ds_meta = {
-        "config": config["datasets"][ds],
         "samples": {}
     }
 
     if ds_src == "PRIDE":
 
-        pride_proj_meta = query_pride_project_metadata(ds,config)
-        pride_file_meta = query_pride_file_metadata(ds,config)
-        ds_url = get_pride_dataset_url(ds,pride_proj_meta)
+        proj_acn = config["datasets"][ds]["project_accession"]
+        pride_file_meta = query_pride_file_metadata(proj_acn)
 
         for rec in pride_file_meta:
             sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
             file_fmt = file_ext[1:]
             if ds_fmt_regex.match(file_fmt):
                 if sample in ds_meta["samples"]:
-                    raise ValueError("dataset '{}' has duplicate sample '{}'".format(ds,sample))
+                    raise ValueError("PRIDE project '{}' has duplicate sample '{}'".format(proj_acn,sample))
+
+                file_url = None
+                for file_loc_meta in rec["publicFileLocations"]:
+                    if file_loc_meta["name"] == "FTP Protocol":
+                        file_url = file_loc_meta["value"]
+                        break
+
+                if file_url is None:
+                    raise ValueError("FTP URL not found for sample '{}'".format(sample))
+
                 ds_meta["samples"][sample] = {
                     "size": rec["fileSizeBytes"],
-                    "url": ds_url + rec["fileName"]
+                    "checksum": rec["checksum"],
+                    "file": file_url
                 }
-
-        mtime_info = get_pride_file_mtime_info(
-            (x["url"] for x in ds_meta["samples"].values())
-        )
-        for sample,sample_meta in ds_meta["samples"].items():
-            url = sample_meta["url"]
-            mod_dt = datetime.fromtimestamp(mtime_info[url],timezone.utc)
-            sample_meta["last-modified"] = utc_strftime(mod_dt)
 
     elif ds_src == "local":
 
+        ds_dir = dataset_dir(ds,config)
         if os.path.isdir(ds_dir):
             for item_name in sorted(os.listdir(ds_dir)):
                 item_path = os.path.join(ds_dir,item_name)
@@ -75,9 +74,8 @@ def get_dataset_metadata(ds,config):
                     if (ds_fmt_regex.match(file_fmt) and
                             sample not in ds_meta["samples"]):
                         ds_meta["samples"][sample] = {
-                            "path": item_path
+                            "file": item_path
                         }
-
     else:
         raise ValueError(
             "unsupported proteomics data source: '{}'".format(ds_src))
@@ -123,81 +121,6 @@ def get_group_sample_meta(ds,subset,grouping,group,samples):
     return group_samples
 
 
-def get_pride_dataset_readme_url(ds,ds_meta):
-    readme_url = None
-    for sample_meta in ds_meta["samples"].values():
-        file_url = sample_meta["url"]
-        parsed_url = urlparse(file_url)
-        url_path_parts = parsed_url.path.split("/")
-        ds_dir_path = "/".join(url_path_parts[:7]) + "/"
-        pred_path = ds_dir_path + "README.txt"
-        pred_url_attrs = parsed_url[:2] + (pred_path,) + parsed_url[3:]
-        pred_url = urlunparse(pred_url_attrs)
-        if pred_url != readme_url:
-            if readme_url is None:
-                readme_url = pred_url
-            else:
-                raise ValueError(
-                    "cannot infer README URL for dataset: '{}'".format(ds))
-    return readme_url
-
-
-def get_pride_dataset_url(ds,pride_proj_meta):
-
-    # The dataset name is not guaranteed to be the same as the PRIDE
-    # project accession, so we take that from the project metadata.
-    proj_ac = pride_proj_meta["accession"]
-
-    # We start from the assumption that the URL reflects the date of publication, but
-    # allow for the possibility that it has been revised any time between then and now.
-    pub_date = pride_proj_meta["publicationDate"]
-    ds_date = datetime.strptime(pub_date,"%Y-%m-%d").date()
-    date_now = datetime.utcnow().date()
-
-    one_month = relativedelta(months=1)
-    next_month = date_now + one_month
-    next_month = next_month.replace(day=1)  # note to self: avoid future dates
-
-    ds_url = None
-    base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
-    while ds_date < next_month:
-        ds_url = "{}/{:d}/{:02d}/{}/".format(base_url,ds_date.year,ds_date.month,proj_ac)
-        r = requests.head(ds_url)
-        if r.status_code == 200:
-            break
-        ds_date = ds_date + one_month
-        sleep(0.333)
-
-    if ds_url is None:
-        raise RuntimeError(
-            "failed to determine PRIDE project URL of dataset '{}'".format(ds))
-
-    return ds_url
-
-
-def get_pride_file_mtime_info(file_urls):
-
-    mtime_info = {}
-    with requests.Session() as s:
-
-        for file_url in file_urls:
-            parsed_url = urlparse(file_url)
-
-            if parsed_url.netloc != "ftp.pride.ebi.ac.uk":
-                raise ValueError(
-                    "invalid PRIDE file URL: '{}'".format(file_url))
-
-            http_url = "http://{}{}".format(parsed_url.netloc,parsed_url.path)
-            r = s.head(http_url)
-            r.raise_for_status()
-
-            mod_dt = datetime.strptime(r.headers["Last-Modified"],
-                                       "%a, %d %b %Y %H:%M:%S GMT")
-            mtime_info[file_url] = timegm(mod_dt.timetuple())
-
-    return mtime_info
-
-
 def get_samples(ds,subset,grouping,samples):
     rel_samples = samples.xs(key=ds,level="dataset")
 
@@ -233,6 +156,12 @@ def is_msconvert_fmt(fmt,config):
     return regex.match(fmt) is not None
 
 
+def is_wget_url(file):
+    wget_url_prefix = re.compile("(?:ftp|http|https)://",
+                                 re.IGNORECASE)
+    return wget_url_prefix.match(file) is not None
+
+
 def load_config_file(config_file):
     with open(config_file) as f:
         return yaml.safe_load(f)
@@ -243,6 +172,20 @@ def load_sample_sheet(file):
                           keep_default_na=False)
     return samples.set_index(["dataset","sample"],drop=False,
                              verify_integrity=True)
+
+
+def pull_download_sheet(samples):
+
+    downloads = samples.loc[samples["file"].apply(is_wget_url),:]
+
+    if downloads["checksum"].isna().any():
+        raise ValueError("all download files must have an associated checksum")
+
+    downloads = downloads[["dataset","file","checksum"]].assign(
+        dl_file=downloads["file"].apply(url_basename))
+
+    return downloads.set_index(["dataset","dl_file"],drop=False,
+                               verify_integrity=True)
 
 
 @contextmanager
@@ -263,54 +206,17 @@ def open_as_text(file,mode="r"):
             file_obj.close()
 
 
-def query_pride_file_metadata(ds,config):
-
-    ds_conf = config["datasets"][ds]
-    try:
-        proj_ac = ds_conf["project_accession"]
-    except KeyError:
-        proj_ac = ds
+def query_pride_file_metadata(proj_acn):
 
     base_url = "https://www.ebi.ac.uk/pride/ws/archive/v2"
-    request_url = "{}/files/byProject?accession={}".format(base_url,proj_ac)
+    request_url = "{}/files/byProject?accession={}".format(base_url,proj_acn)
     response = requests.get(request_url)
 
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         if response.status_code == 401:
-            if "project_accession" in ds_conf:
-                raise ValueError("dataset '{}' has invalid PRIDE project "
-                                 "accession: '{}'".format(ds,proj_ac))
-            else:
-                raise ValueError("please specify a PRIDE project accession "
-                                 "for dataset '{}'".format(ds))
-        else:
-            raise e
-
-    return response.json()
-
-
-def query_pride_project_metadata(ds,config):
-    ds_conf = config["datasets"][ds]
-    try:
-        proj_ac = ds_conf["project_accession"]
-    except KeyError:
-        proj_ac = ds
-    base_url = "https://www.ebi.ac.uk/pride/ws/archive/v2"
-    request_url = "{}/projects/{}".format(base_url,proj_ac)
-    response = requests.get(request_url)
-
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        if response.status_code == 401:
-            if "project_accession" in ds_conf:
-                raise ValueError("dataset '{}' has invalid PRIDE project "
-                                 "accession: '{}'".format(ds,proj_ac))
-            else:
-                raise ValueError("please specify a PRIDE project accession "
-                                 "for dataset '{}'".format(ds))
+            raise ValueError("invalid PRIDE project accession: '{}'".format(proj_acn))
         else:
             raise e
 
