@@ -16,9 +16,6 @@ rule download_sample:
     resources:
         mem = 1000,
         bandwidth = 2  # MB/s
-    wildcard_constraints:
-        gzip_ext = "(\.gz)?",
-        fmt = "[^.]+"
     shell:"""
         wget --limit-rate="{resources.bandwidth}m" --tries 59 \
             --random-wait --wait=599 {params.file_url} \
@@ -35,3 +32,20 @@ rule download_sample:
           exit 1
         fi
     """
+
+
+rule confirm_checksums:
+    input:
+        cksum_files=lambda wc: [
+            os.path.join(config["dataset_path"],wc.ds,"{}.sha1".format(dl_file))
+            for dl_file in downloads.loc[pd.IndexSlice[wc.ds],"dl_file"]
+        ],
+        config_file="config.yaml"
+    output:
+        cksum_file=os.path.join(config["dataset_path"],"{ds}","sha1checksums.txt")
+    log:
+        o="log/download_sample/{ds}/confirm_checksums.out",
+        e="log/download_sample/{ds}/confirm_checksums.err"
+    threads: 1
+    script:
+        "../scripts/confirm_checksums.py"

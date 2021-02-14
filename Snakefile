@@ -1,6 +1,8 @@
 from functools import partial
 import os
 
+import pandas as pd
+
 from scripts.common import (get_samples,
                             load_sample_sheet,
                             pull_download_sheet)
@@ -55,6 +57,8 @@ def input_crux_percolator():
                             for sdb in config["dbs"][db]["paths"]:
                                 yield os.path.join("out",db,"percolator",ds,subset,em,grouping,
                                                    group,sdb,"percolator.target.psms.proc.txt")
+    for ds in downloads["dataset"].unique():
+        yield os.path.join(config["dataset_path"],ds,"sha1checksums.txt")
 
 
 rule all:
