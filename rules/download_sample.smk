@@ -20,17 +20,18 @@ rule download_sample:
         gzip_ext = "(\.gz)?",
         fmt = "[^.]+"
     shell:"""
-        bash scripts/download_file.sh -b {resources.bandwidth} \
-          {params.file_url} {output.data_file} \
-          1>{log.o} 2>{log.e}
+        wget --limit-rate="{resources.bandwidth}m" --tries 59 \
+            --random-wait --wait=599 {params.file_url} \
+            -O {output.data_file} 1>{log.o} 2>{log.e}
 
-        rhash --printf="%h" {output.data_file} -o {output.cksum_file}
+        rhash --printf="%h" {output.data_file} -o {output.cksum_file} \
+            1>>{log.o} 2>>{log.e}
 
         exp_cksum={params.file_cksum}
         obs_cksum=$(cat {output.cksum_file})
         if [[ "$obs_cksum" != "$exp_cksum" ]]
         then
-          echo "ERROR: checksum mismatch for file: {params.file_url}"
+          echo "ERROR: checksum mismatch for file: {params.file_url}" >> {log.e}
           exit 1
         fi
     """
