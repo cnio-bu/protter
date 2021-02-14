@@ -1,11 +1,9 @@
-from calendar import timegm
 from contextlib import contextmanager
-from datetime import datetime,timezone
 import functools
 import gzip
 import os
 import re
-from urllib.parse import unquote,urlparse,urlunparse
+from urllib.parse import unquote,urlparse
 
 import pandas as pd
 import requests
@@ -240,13 +238,3 @@ def url_basename(url):
     if not basename:
         raise ValueError("failed to get basename of URL: '{}'".format(url))
     return basename
-
-
-def utc_strftime(dt):
-    """Format datetime object as UTC timestamp string."""
-    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def utc_strptime(ts):
-    """Make datetime object from UTC timestamp string."""
-    return datetime.strptime(ts,"%Y-%m-%dT%H:%M:%SZ")

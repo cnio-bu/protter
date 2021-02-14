@@ -5,13 +5,11 @@ import pandas as pd
 import snakemake
 
 from .common import (dataset_dir,
-                     dataset_source,
                      get_samples,
                      is_comet_fmt,
                      is_msconvert_fmt,
                      is_wget_url,
-                     url_basename,
-                     utc_strptime)
+                     url_basename)
 
 
 def comet_input_file(wildcards,config,samples):
