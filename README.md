@@ -6,9 +6,6 @@ be local or remote (see [Data sources](#data-sources)).
 
 Allows for the easy addition of datasets and search engines.
 
-Note the the `msconvert` rule for converting raw files to mzML format currently
-requires access to a computer with Docker and rsync installed.
-
 ## Data sources
 
 Input mass spectrometry data may be obtained from files stored locally,
@@ -19,18 +16,15 @@ by specifying a PRIDE project accession.
 
 ## Dependencies
 
-For conversion of mass spectrometry data from proprietary vendor
+For conversion of mass spectrometry data from Thermo RAW
 formats to the standard mzML format, this workflow depends on
-[ProteoWizard](http://www.proteowizard.org)
-([Kessner et al. 2008](https://doi.org/10.1093/bioinformatics/btn323);
-[Chambers et al. 2012](https://doi.org/10.1038/nbt.2377)),
-in particular the ProteoWizard Docker image
-[pwiz-skyline-i-agree-to-the-vendor-licenses](
-https://hub.docker.com/r/chambm/pwiz-skyline-i-agree-to-the-vendor-licenses).
-As its name implies, use of this ProteoWizard Docker image entails agreement with the
-ProteoWizard Apache 2.0 License, subject to further restrictions imposed by the licenses
-of the vendor libraries on which it depends. These licenses can be viewed on the
-[ProteoWizard licenses webpage](http://www.proteowizard.org/licenses.html).
+[ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser)
+([Hulstaert et al. 2020](https://doi.org/10.1021/acs.jproteome.9b00328)).
+ThermoRawFileParser is currently available under an Apache 2.0 License,
+subject to further restrictions imposed by the license of the Thermo
+Finnigan LLC vendor library on which it depends. These licenses can be
+viewed in the [ThermoRawFileParser GitHub repository](
+https://github.com/compomics/ThermoRawFileParser).
 
 The protter workflow also depends on the following packages:
 
@@ -47,10 +41,9 @@ The protter workflow also depends on the following packages:
   — BSD 3-Clause License
 - [PyYAML](https://pyyaml.org)
   — MIT License
+- [ratelimiter](https://github.com/RazerM/ratelimiter)
+  — Apache 2.0 License
 - [requests](https://requests.readthedocs.io/en/master/)
   — Apache 2.0 License
-- [Singularity](https://sylabs.io)
-  ([Kurtzer et al. 2017](https://doi.org/10.1371/journal.pone.0177459))
-  — BSD 3-Clause License
 - [tstk](https://anaconda.org/tdido/tstk)
   — MIT License

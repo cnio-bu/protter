@@ -3,7 +3,6 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-    - proteowizard
     - tstk
     - crux-toolkit
     - decoypyrat

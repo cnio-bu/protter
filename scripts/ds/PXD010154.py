@@ -84,8 +84,8 @@ def enhance_sample_metadata(ds_tab):
 
     ds_tab = ds_tab.loc[~ds_tab["sample"].isin(synthetic_samples)]
 
-    # File "01323_D03_P013562_S00_N20_R1.raw"
-    # cannot currently be processed by msconvert.
+    # File "01323_D03_P013562_S00_N20_R1.raw" cannot be
+    # converted to mzML without error, so we exclude it.
     ds_tab = ds_tab.loc[ds_tab["sample"] != "01323_D03_P013562_S00_N20_R1", :]
 
     enzymes = list()

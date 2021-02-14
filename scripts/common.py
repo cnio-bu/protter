@@ -149,8 +149,8 @@ def is_comet_fmt(fmt,config):
     return regex.match(fmt) is not None
 
 
-def is_msconvert_fmt(fmt,config):
-    regex = _get_fmt_regex(config["software"]["msconvert"]["fmts"])
+def is_raw_fmt(fmt,config):
+    regex = _get_fmt_regex(["raw"])
     return regex.match(fmt) is not None
 
 

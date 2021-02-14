@@ -7,7 +7,7 @@ import snakemake
 from .common import (dataset_dir,
                      get_samples,
                      is_comet_fmt,
-                     is_msconvert_fmt,
+                     is_raw_fmt,
                      is_wget_url,
                      url_basename)
 
@@ -18,8 +18,8 @@ def comet_input_file(wildcards,config,samples):
 
     if is_comet_fmt(ds_fmt,config):
         input_file = sample_data_file(wildcards,config,samples)
-    elif is_msconvert_fmt(ds_fmt,config):
-        input_file = msconvert_output_pattern(config)
+    elif is_raw_fmt(ds_fmt,config):
+        input_file = mzml_output_pattern(config)
     else:
         raise ValueError(
             "unsupported proteomics file format: '{}'".format(ds_fmt))
@@ -80,26 +80,26 @@ def download_sample_output_pattern(config):
     return out_patt
 
 
-def msconvert_input_file(wildcards,config,samples):
+def raw_input_file(wildcards,config,samples):
     ds = wildcards.ds
     ds_fmt = config["datasets"][ds]["fmt"]
 
-    if is_msconvert_fmt(ds_fmt,config):
-        msconvert_input = sample_data_file(wildcards,config,samples)
-    elif is_comet_fmt(ds_fmt,config):  # i.e. no need to run msconvert
-        msconvert_input = ""
+    if is_raw_fmt(ds_fmt,config):
+        raw_input = sample_data_file(wildcards,config,samples)
+    elif is_comet_fmt(ds_fmt,config):  # i.e. no need to convert
+        raw_input = ""
     else:
         raise ValueError(
             "unsupported proteomics file format: '{}'".format(ds_fmt))
 
-    return msconvert_input
+    return raw_input
 
 
-def msconvert_output_pattern(config):
+def mzml_output_pattern(config):
     out_patt = os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
 
     try:
-        output_flags = config["rules"]["msconvert"]["output"]["flags"]
+        output_flags = config["rules"]["raw_to_mzml"]["output"]["flags"]
     except KeyError:
         output_flags = []
 
@@ -110,26 +110,6 @@ def msconvert_output_pattern(config):
         out_patt = flag_func(out_patt)
 
     return out_patt
-
-
-def msconvert_rule_config(config):
-    raw_config = config["software"]["msconvert"]
-    rule_config = defaultdict(str)
-
-    rule_config["docker_image"] = raw_config["docker_image"]
-    rule_config["docker_host"] = raw_config.get("docker_host","local")
-    if rule_config["docker_host"] != "local":
-        remote_host = raw_config["remote"]["hostname"]
-        remote_user = raw_config["remote"]["username"]
-        rule_config["remote_addr"] = "{}@{}".format(remote_user,remote_host)
-        rule_config["remote_key"] = raw_config["remote"].get("private_key","")
-
-        local_host = raw_config["local"]["hostname"]
-        local_user = raw_config["local"]["username"]
-        rule_config["local_addr"] = "{}@{}".format(local_user,local_host)
-        rule_config["local_key"] = raw_config["local"].get("private_key","")
-
-    return rule_config
 
 
 def percolator_enzyme(wildcards,config,samples):
