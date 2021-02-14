@@ -176,6 +176,9 @@ def pull_download_sheet(samples):
 
     downloads = samples.loc[samples["file"].apply(is_wget_url),:]
 
+    if "subset" in samples.columns:
+        downloads = downloads.loc[~downloads["subset"].isna(),:]
+
     if downloads["checksum"].isna().any():
         raise ValueError("all download files must have an associated checksum")
 
