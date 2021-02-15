@@ -14,6 +14,6 @@ rule raw_to_mzml:
     resources:
         mem = 8000
     shell:"""
-        ThermoRawFileParser -f=2 -m=0 --gzip \
+        ThermoRawFileParser -f=2 --gzip \
             --input={input.raw_file} 1>{log.o} 2>{log.e}
     """
