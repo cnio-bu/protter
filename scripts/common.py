@@ -6,7 +6,10 @@ import re
 from urllib.parse import unquote,urlparse
 
 import pandas as pd
-import requests
+from ratelimiter import RateLimiter
+from requests.adapters import HTTPAdapter
+from requests.exceptions import HTTPError
+from requests import Session
 import yaml
 
 
@@ -35,30 +38,36 @@ def get_dataset_metadata(ds,config):
 
     if ds_src == "PRIDE":
 
-        proj_acn = config["datasets"][ds]["project_accession"]
-        pride_file_meta = query_pride_file_metadata(proj_acn)
+        proj_acc = config["datasets"][ds]["project_accession"]
 
-        for rec in pride_file_meta:
-            sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
-            file_fmt = file_ext[1:]
-            if ds_fmt_regex.match(file_fmt):
-                if sample in ds_meta["samples"]:
-                    raise ValueError("PRIDE project '{}' has duplicate sample '{}'".format(proj_acn,sample))
+        with Session() as session:
+            session.mount("https://www.ebi.ac.uk/pride/",
+                          HTTPAdapter(max_retries=3))
 
-                file_url = None
-                for file_loc_meta in rec["publicFileLocations"]:
-                    if file_loc_meta["name"] == "FTP Protocol":
-                        file_url = file_loc_meta["value"]
-                        break
+            pride_file_meta = query_pride_file_metadata(session,proj_acc)
 
-                if file_url is None:
-                    raise ValueError("FTP URL not found for sample '{}'".format(sample))
+            for rec in pride_file_meta:
+                sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
+                file_fmt = file_ext[1:]
+                if ds_fmt_regex.match(file_fmt):
+                    if sample in ds_meta["samples"]:
+                        raise ValueError(
+                            "PRIDE project '{}' has duplicate sample '{}'".format(proj_acc,sample))
 
-                ds_meta["samples"][sample] = {
-                    "size": rec["fileSizeBytes"],
-                    "checksum": rec["checksum"],
-                    "file": file_url
-                }
+                    file_url = None
+                    for file_loc_meta in rec["publicFileLocations"]:
+                        if file_loc_meta["name"] == "FTP Protocol":
+                            file_url = file_loc_meta["value"]
+                            break
+
+                    if file_url is None:
+                        raise ValueError("FTP URL not found for sample '{}'".format(sample))
+
+                    ds_meta["samples"][sample] = {
+                        "size": rec["fileSizeBytes"],
+                        "checksum": rec["checksum"],
+                        "file": file_url
+                    }
 
     elif ds_src == "local":
 
@@ -207,17 +216,18 @@ def open_as_text(file,mode="r"):
             file_obj.close()
 
 
-def query_pride_file_metadata(proj_acn):
+@RateLimiter(max_calls=3, period=1)
+def query_pride_file_metadata(session,proj_acc):
 
     base_url = "https://www.ebi.ac.uk/pride/ws/archive/v2"
-    request_url = "{}/files/byProject?accession={}".format(base_url,proj_acn)
-    response = requests.get(request_url)
+    request_url = "{}/files/byProject?accession={}".format(base_url,proj_acc)
+    response = session.get(request_url)
 
     try:
         response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
+    except HTTPError as e:
         if response.status_code == 401:
-            raise ValueError("invalid PRIDE project accession: '{}'".format(proj_acn))
+            raise ValueError("invalid PRIDE project accession: '{}'".format(proj_acc))
         else:
             raise e
 
