@@ -32,42 +32,52 @@ def get_dataset_metadata(ds,config):
     ds_fmt_regex = _get_fmt_regex([config["datasets"][ds]["fmt"]])
     ds_src = dataset_source(ds,config)
 
-    ds_meta = {
-        "samples": {}
-    }
-
+    ds_meta = dict()
     if ds_src == "PRIDE":
 
-        proj_acc = config["datasets"][ds]["project_accession"]
+        if "projects" in config["datasets"][ds]:
+            proj_accs = config["datasets"][ds]["projects"]
+        elif "project" in config["datasets"][ds]:
+            proj_accs = [config["datasets"][ds]["project"]]
+        else:
+            raise ValueError(
+                "no PRIDE project specified for dataset: '{}'".format(ds))
 
         with Session() as session:
             session.mount("https://www.ebi.ac.uk/pride/",
                           HTTPAdapter(max_retries=3))
 
-            pride_file_meta = query_pride_file_metadata(session,proj_acc)
+            for proj_acc in proj_accs:
+                proj_file_meta = query_pride_file_metadata(session,proj_acc)
 
-            for rec in pride_file_meta:
-                sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
-                file_fmt = file_ext[1:]
-                if ds_fmt_regex.match(file_fmt):
-                    if sample in ds_meta["samples"]:
+                for rec in proj_file_meta:
+
+                    if proj_acc not in rec["projectAccessions"]:
                         raise ValueError(
-                            "PRIDE project '{}' has duplicate sample '{}'".format(proj_acc,sample))
+                            "PRIDE file metadata lacks project accession: '{}'".format(proj_acc))
 
-                    file_url = None
-                    for file_loc_meta in rec["publicFileLocations"]:
-                        if file_loc_meta["name"] == "FTP Protocol":
-                            file_url = file_loc_meta["value"]
-                            break
+                    sample,file_ext,gzip_ext = split_gzip_ext(rec["fileName"])
+                    file_fmt = file_ext[1:]
+                    if ds_fmt_regex.match(file_fmt):
+                        if sample in ds_meta:
+                            raise ValueError(
+                                "dataset '{}' has duplicate sample '{}'".format(ds,sample))
 
-                    if file_url is None:
-                        raise ValueError("FTP URL not found for sample '{}'".format(sample))
+                        file_url = None
+                        for file_loc_meta in rec["publicFileLocations"]:
+                            if file_loc_meta["name"] == "FTP Protocol":
+                                file_url = file_loc_meta["value"]
+                                break
 
-                    ds_meta["samples"][sample] = {
-                        "size": rec["fileSizeBytes"],
-                        "checksum": rec["checksum"],
-                        "file": file_url
-                    }
+                        if file_url is None:
+                            raise ValueError(
+                                "FTP URL not found for sample '{}'".format(sample))
+
+                        ds_meta[sample] = {
+                            "project": proj_acc,
+                            "checksum": rec["checksum"],
+                            "file": file_url
+                        }
 
     elif ds_src == "local":
 
@@ -79,8 +89,8 @@ def get_dataset_metadata(ds,config):
                     sample,file_ext,gzip_ext = split_gzip_ext(item_name)
                     file_fmt = file_ext[1:]
                     if (ds_fmt_regex.match(file_fmt) and
-                            sample not in ds_meta["samples"]):
-                        ds_meta["samples"][sample] = {
+                            sample not in ds_meta):
+                        ds_meta[sample] = {
                             "file": item_path
                         }
     else:

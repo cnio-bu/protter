@@ -15,18 +15,24 @@ from ds import dataset_module_names,load_dataset_module
 
 
 def init_sample_metadata(ds,config):
-    recs = list()
     ds_meta = get_dataset_metadata(ds,config)
-    for sample in sorted(ds_meta["samples"].keys()):
-        sample_meta = ds_meta["samples"][sample]
+
+    recs = list()
+    for sample in sorted(ds_meta.keys()):
+        sample_meta = ds_meta[sample]
         recs.append({
             "dataset": ds,
+            "project": sample_meta.get("project",pd.NA),
             "sample": sample,
             "file": sample_meta["file"],
             "checksum": sample_meta.get("checksum",pd.NA)
         })
-    col_names = ["dataset","sample","file","checksum"]
-    return pd.DataFrame(recs,columns=col_names,dtype="string")
+
+    col_names = ["dataset","project","sample","file","checksum"]
+    ds_tab = pd.DataFrame(recs,columns=col_names,dtype="string")
+    ds_tab.dropna(axis=1,how="all",inplace=True)
+
+    return ds_tab
 
 
 if __name__ == "__main__":

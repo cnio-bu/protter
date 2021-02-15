@@ -28,7 +28,7 @@ with open(out_log_file,"w") as out_log_f, open(err_log_file,"w") as err_log_f:
                 dl_file_name = os.path.basename(dl_file_path)
                 sample,file_ext,gzip_ext = split_gzip_ext(dl_file_name)
 
-                exp_cksum = ds_meta["samples"][sample]["checksum"]
+                exp_cksum = ds_meta[sample]["checksum"]
                 with open(input_cksum_file) as in_f:
                     obs_cksum = in_f.read()
                 if obs_cksum != exp_cksum:

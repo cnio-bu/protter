@@ -1,4 +1,3 @@
-from collections import defaultdict
 import os
 
 import pandas as pd
