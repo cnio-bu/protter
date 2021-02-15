@@ -31,8 +31,6 @@ The protter workflow also depends on the following packages:
 - [Crux toolkit](https://crux.ms/)
   ([McIlwain et al. 2014](https://doi.org/10.1021/pr500741y))
   — Apache 2.0 License
-- [dateutil](https://anaconda.org/anaconda/python-dateutil)
-  — BSD 3-Clause License
 - [DecoyPYrat](https://anaconda.org/bioconda/decoypyrat)
   ([Wright & Choudhary 2016](https://doi.org/10.4172/jpb.1000404))
   — MIT License
