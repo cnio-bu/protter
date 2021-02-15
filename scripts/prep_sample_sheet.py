@@ -38,9 +38,9 @@ def init_sample_metadata(ds,config):
 if __name__ == "__main__":
 
     ap = ArgumentParser(description=__doc__)
-    ap.add_argument("--config-file",
+    ap.add_argument("config_file",
                     help="input config YAML file")
-    ap.add_argument("--sample-file",
+    ap.add_argument("sample_file",
                     help="output sample sheet TSV file")
     args = ap.parse_args()
 
