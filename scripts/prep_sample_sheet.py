@@ -55,12 +55,23 @@ if __name__ == "__main__":
     known_datasets = dataset_module_names()
 
     ds_tabs = list()
+    subsetted_datasets = set()
     for ds in datasets:
         ds_tab = init_sample_metadata(ds,config)
+
         if ds in known_datasets:
             ds_module = load_dataset_module(ds)
             ds_tab = ds_module.enhance_sample_metadata(ds_tab)
+
+        if "subset" in ds_tab.columns:
+            subsetted_datasets.add(ds)
+
         ds_tabs.append(ds_tab)
+
+    if subsetted_datasets:
+        for i,ds in enumerate(datasets):
+            if ds not in subsetted_datasets:
+                ds_tabs[i] = ds_tabs[i].assign(subset=["all"] * len(ds_tabs[i]))
 
     samples = pd.concat(ds_tabs)
     samples.to_csv(sample_file,sep="\t",na_rep="NA",

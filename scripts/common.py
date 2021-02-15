@@ -141,9 +141,10 @@ def get_group_sample_meta(ds,subset,grouping,group,samples):
 def get_samples(ds,subset,grouping,samples):
     rel_samples = samples.xs(key=ds,level="dataset")
 
-    if subset != "all":
-        if "subset" not in rel_samples.columns:
-            raise ValueError("subset not configured: '{}'".format(subset))
+    if "subset" in rel_samples.columns:
+        if subset == "all" and set(rel_samples["subset"]) != {"all"}:
+            raise ValueError(
+                "subset 'all' not configured correctly for dataset '{}'".format(ds))
         rel_samples = rel_samples.loc[rel_samples["subset"] == subset]
 
     group_to_samples = dict()

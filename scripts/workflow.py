@@ -44,8 +44,6 @@ def dataset_subsets(ds,samples):
     ds_samples = samples.xs(key=ds,level="dataset")
     if "subset" in ds_samples.columns:
         subsets = list(ds_samples["subset"].dropna().unique())
-        if not subsets:
-            subsets = ["all"]
     else:
         subsets = ["all"]
     return subsets
@@ -119,9 +117,10 @@ def percolator_enzyme(wildcards,config,samples):
 
     rel_samples = samples.xs(key=ds,level="dataset")
 
-    if subset != "all":
-        if "subset" not in rel_samples.columns:
-            raise ValueError("subset not configured: '{}'".format(subset))
+    if "subset" in rel_samples.columns:
+        if subset == "all" and set(rel_samples["subset"]) != {"all"}:
+            raise ValueError(
+                "subset 'all' not configured correctly for dataset '{}'".format(ds))
         rel_samples = rel_samples.loc[rel_samples["subset"] == subset]
 
     if "enzyme" in rel_samples.columns:
