@@ -24,6 +24,8 @@ configfile: os.path.join(workflow.basedir, "config.yaml")
 
 config["dataset_path"] = os.path.relpath(os.path.join(
     workflow.basedir, config["dataset_path"]))
+config["download_path"] = os.path.relpath(os.path.join(
+    workflow.basedir, config["download_path"]))
 
 sample_file = config["samples"]
 samples = load_sample_sheet(sample_file)
@@ -58,7 +60,7 @@ def input_crux_percolator():
                                 yield os.path.join("out",db,"percolator",ds,subset,em,grouping,
                                                    group,sdb,"percolator.target.psms.proc.txt")
     for ds in downloads["dataset"].unique():
-        yield os.path.join(config["dataset_path"],ds,"sha1checksums.txt")
+        yield os.path.join(config["download_path"],ds,"sha1checksums.txt")
 
 
 rule all:

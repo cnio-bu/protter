@@ -27,6 +27,10 @@ def dataset_source(ds,config):
     return ds_conf["source"] if "source" in ds_conf else "local"
 
 
+def download_dir(ds,config):
+    return os.path.join(config["download_path"],ds)
+
+
 def get_dataset_metadata(ds,config):
 
     ds_fmt_regex = _get_fmt_regex([config["datasets"][ds]["fmt"]])

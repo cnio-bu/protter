@@ -58,6 +58,7 @@ dbs:
 default_groupings:
     - single
 
+download_path: "res/downloads/prot"
 dataset_path: "res/data/prot"
 
 samples: "samples.tsv"
@@ -182,15 +183,6 @@ datasets:
         fmt: raw
         dbs:
             - GENCODEv29
-
-
-rules:
-    raw_to_mzml:
-        output:
-            flags: [temp]
-    download_sample:
-        output:
-            flags: [temp]
 
 
 software:

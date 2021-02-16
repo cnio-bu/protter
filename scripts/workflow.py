@@ -1,9 +1,9 @@
 import os
 
 import pandas as pd
-import snakemake
+from snakemake.io import temp
 
-from .common import (dataset_dir,
+from .common import (download_dir,
                      get_samples,
                      is_comet_fmt,
                      is_raw_fmt,
@@ -61,20 +61,7 @@ def download_sample_file_url(wildcards,downloads):
 
 
 def download_sample_output_pattern(config):
-    out_patt = os.path.join(config["dataset_path"],"{ds}","{dl_file}")
-
-    try:
-        output_flags = config["rules"]["download_sample"]["output"]["flags"]
-    except KeyError:
-        output_flags = []
-
-    # Call the flag functions right-to-left, as
-    # if in a series of nested function calls.
-    for flag_name in reversed(output_flags):
-        flag_func = getattr(snakemake.io, flag_name)
-        out_patt = flag_func(out_patt)
-
-    return out_patt
+    return temp(os.path.join(config["download_path"],"{ds}","{dl_file}"))
 
 
 def raw_input_file(wildcards,config,samples):
@@ -93,20 +80,7 @@ def raw_input_file(wildcards,config,samples):
 
 
 def mzml_output_pattern(config):
-    out_patt = os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz")
-
-    try:
-        output_flags = config["rules"]["raw_to_mzml"]["output"]["flags"]
-    except KeyError:
-        output_flags = []
-
-    # Call the flag functions right-to-left, as
-    # if in a series of nested function calls.
-    for flag_name in reversed(output_flags):
-        flag_func = getattr(snakemake.io, flag_name)
-        out_patt = flag_func(out_patt)
-
-    return out_patt
+    return temp(os.path.join(config["dataset_path"],"{ds}","{sample}.mzML.gz"))
 
 
 def percolator_enzyme(wildcards,config,samples):
@@ -160,7 +134,7 @@ def sample_data_file(wildcards,config,samples):
 
     if is_wget_url(input_file):
         file_name = url_basename(input_file)
-        ds_dir = dataset_dir(ds,config)
-        input_file = os.path.join(ds_dir,file_name)
+        dl_dir = download_dir(ds,config)
+        input_file = os.path.join(dl_dir,file_name)
 
     return input_file

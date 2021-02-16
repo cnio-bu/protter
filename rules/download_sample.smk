@@ -1,7 +1,7 @@
 rule download_sample:
     output:
         data_file=download_sample_output_pattern(),
-        cksum_file=os.path.join(config["dataset_path"],"{ds}","{dl_file}.sha1")
+        cksum_file=os.path.join(config["download_path"],"{ds}","{dl_file}.sha1")
     params:
         file_url=download_sample_file_url,
         file_cksum=download_sample_file_checksum
@@ -37,12 +37,12 @@ rule download_sample:
 rule confirm_checksums:
     input:
         cksum_files=lambda wc: [
-            os.path.join(config["dataset_path"],wc.ds,"{}.sha1".format(dl_file))
+            os.path.join(config["download_path"],wc.ds,"{}.sha1".format(dl_file))
             for dl_file in downloads.loc[pd.IndexSlice[wc.ds],"dl_file"]
         ],
         config_file="config.yaml"
     output:
-        cksum_file=os.path.join(config["dataset_path"],"{ds}","sha1checksums.txt")
+        cksum_file=os.path.join(config["download_path"],"{ds}","sha1checksums.txt")
     log:
         o="log/download_sample/{ds}/confirm_checksums.out",
         e="log/download_sample/{ds}/confirm_checksums.err"

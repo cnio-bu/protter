@@ -6,6 +6,7 @@ out
 *.swp
 profiles/*
 res/data/*
+res/downloads/*
 res/conf/comet/*
 res/conf/subsets/*
 !res/conf/comet/comet.params.orbitrap.conf

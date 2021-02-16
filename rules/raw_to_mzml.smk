@@ -16,4 +16,9 @@ rule raw_to_mzml:
     shell:"""
         ThermoRawFileParser -f=2 --gzip \
             --input={input.raw_file} 1>{log.o} 2>{log.e}
+
+        tmp_mzml_file=$(echo "{input.raw_file}" | sed 's/\.raw$//i')".mzML.gz"
+        if [[ "$tmp_mzml_file" != "{output.mzml_file}" ]]
+        then mv "$tmp_mzml_file" "{output.mzml_file}"
+        fi
     """
