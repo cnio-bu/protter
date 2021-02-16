@@ -84,15 +84,20 @@ def enhance_sample_metadata(ds_tab):
 
     ds_tab = ds_tab.loc[~ds_tab["sample"].isin(synthetic_samples)]
 
-    # File "01323_D03_P013562_S00_N20_R1.raw" cannot be
-    # converted to mzML without error, so we exclude it.
-    ds_tab = ds_tab.loc[ds_tab["sample"] != "01323_D03_P013562_S00_N20_R1", :]
-
+    subsets = list()
     enzymes = list()
     tissues = list()
     for _,row in ds_tab.iterrows():
         sample = row["sample"]
-        enzymes.append(study_meta[sample]["enzyme"])
-        tissues.append(study_meta[sample]["tissue"])
+        enzyme = study_meta[sample]["enzyme"]
+        tissue = study_meta[sample]["tissue"]
 
-    return ds_tab.assign(subset=enzymes,enzyme=enzymes,tissue=tissues)
+        # File "01323_D03_P013562_S00_N20_R1.raw" cannot be converted
+        # to mzML format without error, so we effectively exclude it.
+        subset = pd.NA if sample == "01323_D03_P013562_S00_N20_R1" else enzyme
+
+        subsets.append(subset)
+        enzymes.append(enzyme)
+        tissues.append(tissue)
+
+    return ds_tab.assign(subset=subsets,enzyme=enzymes,tissue=tissues)

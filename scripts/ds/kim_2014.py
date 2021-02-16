@@ -77,13 +77,24 @@ def enhance_sample_metadata(ds_tab):
             "tissue": tissue_map[(sample_stage,sample_tissue)]
         }
 
+    subsets = list()
     experiments = list()
     enzymes = list()
     tissues = list()
     for _,row in ds_tab.iterrows():
         sample = row["sample"]
-        experiments.append(study_meta[sample]["experiment"])
-        enzymes.append(study_meta[sample]["enzyme"])
-        tissues.append(study_meta[sample]["tissue"])
+        experiment = study_meta[sample]["experiment"]
+        enzyme = study_meta[sample]["enzyme"]
+        tissue = study_meta[sample]["tissue"]
 
-    return ds_tab.assign(experiment=experiments,enzyme=enzymes,tissue=tissues)
+        # File "Adult_CD4Tcells_Gel_Velos_30_f42.raw" does not
+        # yield a Comet output file, so we effectively exclude it.
+        subset = pd.NA if sample == "Adult_CD4Tcells_Gel_Velos_30_f42" else enzyme
+
+        subsets.append(subset)
+        experiments.append(experiment)
+        enzymes.append(enzyme)
+        tissues.append(tissue)
+
+    return ds_tab.assign(subset=subsets,experiment=experiments,
+                         enzyme=enzymes,tissue=tissues)
