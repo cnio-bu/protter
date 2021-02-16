@@ -59,7 +59,7 @@ if __name__ == "__main__":
     for ds in datasets:
         ds_tab = init_sample_metadata(ds,config)
 
-        if ds in known_datasets:
+        if ds in known_datasets and len(ds_tab) > 0:
             ds_module = load_dataset_module(ds)
             ds_tab = ds_module.enhance_sample_metadata(ds_tab)
 
