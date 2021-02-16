@@ -13,7 +13,7 @@ rule percolator:
         o="log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.out",
         e="log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.err"
     conda:
-        "../envs/environment.yaml"
+        "../envs/crux.yaml"
     threads: 1
     resources:
         mem = 34000,

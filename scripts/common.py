@@ -1,6 +1,3 @@
-from contextlib import contextmanager
-import functools
-import gzip
 import os
 import re
 from urllib.parse import unquote,urlparse
@@ -211,24 +208,6 @@ def pull_download_sheet(samples):
 
     return downloads.set_index(["dataset","dl_file"],drop=False,
                                verify_integrity=True)
-
-
-@contextmanager
-def open_as_text(file,mode="r"):
-    if mode not in {"a","r","w","x"}:
-        raise ValueError("unknown file mode: '{}'".format(mode))
-    text_mode = mode + "t"
-    if str(file).lower().endswith(".gz"):
-        opener = functools.partial(gzip.open,mode=text_mode)
-    else:
-        opener = functools.partial(open,mode=text_mode)
-    file_obj = None
-    try:
-        file_obj = opener(file)
-        yield file_obj
-    finally:
-        if file_obj is not None:
-            file_obj.close()
 
 
 @RateLimiter(max_calls=3, period=1)

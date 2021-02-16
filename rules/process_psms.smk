@@ -16,6 +16,8 @@ rule process_psms:
     benchmark:
         "log/{db}/process_psms/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.bmk"
     threads: 1
+    conda:
+        "../envs/common.yaml"
     resources:
         mem = 8000
     script:

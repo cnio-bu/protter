@@ -19,7 +19,7 @@ rule comet:
         basename="out/{db}/comet/{ds}/{subset}/{sample}.{td}"
     threads: config["software"]["comet"]["threads"]
     conda:
-        "../envs/environment.yaml"
+        "../envs/crux.yaml"
     resources:
         mem = lambda wildcards, attempt: attempt * 8000,
         time = lambda wildcards, attempt: attempt * 120

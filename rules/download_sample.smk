@@ -12,7 +12,7 @@ rule download_sample:
         "log/download_sample/{ds}/{dl_file}.bmk",
     threads: 1
     conda:
-        "../envs/environment.yaml"
+        "../envs/download.yaml"
     resources:
         mem = 1000,
         bandwidth = 2  # MB/s
@@ -47,5 +47,7 @@ rule confirm_checksums:
         o="log/download_sample/{ds}/confirm_checksums.out",
         e="log/download_sample/{ds}/confirm_checksums.err"
     threads: 1
+    conda:
+        "../envs/common.yaml"
     script:
         "../scripts/confirm_checksums.py"

@@ -1,0 +1,6 @@
+channels:
+    - tdido
+    - bioconda
+dependencies:
+    - decoypyrat
+    - tstk

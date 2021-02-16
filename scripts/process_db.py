@@ -1,8 +1,27 @@
 from tstk.io import parsefastx
+from contextlib import contextmanager
 import csv
+import functools
+import gzip
 import hashlib
 
-from common import open_as_text
+
+@contextmanager
+def open_as_text(file,mode="r"):
+    if mode not in {"a","r","w","x"}:
+        raise ValueError("unknown file mode: '{}'".format(mode))
+    text_mode = mode + "t"
+    if str(file).lower().endswith(".gz"):
+        opener = functools.partial(gzip.open,mode=text_mode)
+    else:
+        opener = functools.partial(open,mode=text_mode)
+    file_obj = None
+    try:
+        file_obj = opener(file)
+        yield file_obj
+    finally:
+        if file_obj is not None:
+            file_obj.close()
 
 
 seen = set()

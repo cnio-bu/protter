@@ -7,7 +7,7 @@ rule process_db:
         db="out/{db}/db/target.fasta",
         meta_file="out/{db}/db/target_metadata.tsv"
     conda:
-        "../envs/environment.yaml"
+        "../envs/procdb.yaml"
     log:
         o="log/process_db/{db}.out"
     benchmark:
@@ -32,7 +32,7 @@ rule add_decoys:
     params:
         tmp="out/{db}/db/decoyPYrat.tmp.fasta"
     conda:
-        "../envs/environment.yaml"
+        "../envs/procdb.yaml"
     shell:"""
         decoypyrat {input.db} -t {params.tmp}  -o {output.dec} --decoy_prefix decoy -k > {log.o} 2> {log.e}
         cat {input.db} {output.dec} >> {output.dbd} 2>> {log.e}

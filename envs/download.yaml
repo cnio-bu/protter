@@ -3,8 +3,5 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-    - tstk
-    - crux-toolkit
-    - decoypyrat
     - rhash
     - wget
