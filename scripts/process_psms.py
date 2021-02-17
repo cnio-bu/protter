@@ -37,12 +37,14 @@ if seq_db in ("gencode","upstream"):
         for counter,row in enumerate(reader,start=1):
             if seq_db == "gencode" and row["db_name"] == seq_db:
                 protter_id = "seq{}#gencode#".format(counter)
-                gene_id = row["db_seq_id"].split("|")[2]
+                db_seq_id = row["db_seq_desc"].split(maxsplit=1)[0]
+                gene_id = db_seq_id.split("|")[2]
                 bare_gene_id = gene_id.split(".",1)[0]
                 prot_to_gene[protter_id] = bare_gene_id
             elif seq_db == "upstream" and row["db_name"] == seq_db:
                 protter_id = "seq{}#upstream#".format(counter)
-                gene_id = row["db_seq_id"].split("|")[0]
+                db_seq_id = row["db_seq_desc"].split(maxsplit=1)[0]
+                gene_id = db_seq_id.split("|")[0]
                 bare_gene_id = gene_id.split(".",1)[0]
                 prot_to_gene[protter_id] = bare_gene_id
 

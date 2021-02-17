@@ -1,6 +1,6 @@
 channels:
-    - tdido
+    - conda-forge
     - bioconda
 dependencies:
+    - biopython
     - decoypyrat
-    - tstk
