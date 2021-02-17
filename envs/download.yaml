@@ -1,7 +1,5 @@
 channels:
-    - tdido
     - conda-forge
-    - bioconda
 dependencies:
     - rhash
     - wget
