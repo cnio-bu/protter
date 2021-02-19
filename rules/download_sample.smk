@@ -17,8 +17,8 @@ rule download_sample:
         mem = 1000,
         bandwidth = 2  # MB/s
     shell:"""
-        wget --limit-rate="{resources.bandwidth}m" --tries 59 \
-            --random-wait --wait=599 {params.file_url} \
+        wget --no-verbose --limit-rate="{resources.bandwidth}m" \
+            --tries 59 --random-wait --wait=599 {params.file_url} \
             -O {output.data_file} 1>{log.o} 2>{log.e}
 
         rhash --printf="%h" {output.data_file} -o {output.cksum_file} \
