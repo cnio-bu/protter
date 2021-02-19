@@ -60,6 +60,9 @@ def input_crux_percolator():
                                 yield os.path.join("out",db,"percolator",ds,subset,em,grouping,
                                                    group,sdb,"percolator.target.psms.proc.txt")
     for ds in downloads["dataset"].unique():
+        if not (ds in config["datasets"] and
+                config["datasets"][ds]["enabled"]):
+            continue
         yield os.path.join(config["download_path"],ds,"sha1checksums.txt")
 
 
