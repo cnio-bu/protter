@@ -1,4 +1,7 @@
 rule process_db:
+    '''
+        Merge sequence databases into one nonredundant target FASTA file.
+    '''
     input:
         paths=lambda wc: [config["dbs"][wc.db]["paths"][k] for k in config["dbs"][wc.db]["paths"]]
     params:
@@ -17,7 +20,7 @@ rule process_db:
 
 rule add_decoys:
     '''
-        Use decoPYrat to generate decoy sequences.
+        Use DecoyPYrat to generate decoy sequences.
     '''
     input:
         db="out/{db}/db/target.fasta"

@@ -17,7 +17,7 @@ rule extract_pin:
 
 rule percolator:
     '''
-        Run the crux percolator agorithm to separate target from decoy matches.
+        Run the crux percolator algorithm to separate target from decoy matches.
     '''
     input:
         files=percolator_input_files

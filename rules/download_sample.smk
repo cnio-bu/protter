@@ -1,4 +1,7 @@
 rule download_sample:
+    '''
+        Download remote sample file.
+    '''
     output:
         data_file=download_sample_output_pattern(),
         cksum_file=os.path.join(config["download_path"],"{ds}","{dl_file}.sha1")
@@ -34,6 +37,9 @@ rule download_sample:
 
 
 rule confirm_checksums:
+    '''
+        Confirm checksums for all downloaded files in a dataset.
+    '''
     input:
         cksum_files=lambda wc: [
             os.path.join(config["download_path"],wc.ds,"{}.sha1".format(dl_file))

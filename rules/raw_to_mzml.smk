@@ -1,4 +1,7 @@
 rule raw_to_mzml:
+    '''
+        Convert RAW file to mzML format.
+    '''
     input:
         raw_file=raw_input_file
     output:
