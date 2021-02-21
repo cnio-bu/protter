@@ -7,7 +7,6 @@ rule percolator:
     output:
         f="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.target.psms.txt"
     params:
-        d="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}",
         enzyme=percolator_enzyme
     log:
         o="log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.out",
