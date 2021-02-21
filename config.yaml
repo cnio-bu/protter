@@ -94,7 +94,7 @@ datasets:
         urls:
             pub: https://doi.org/10.1016/j.cell.2020.08.036
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD016999
-    PXD010154:
+    wang_2019:
         source: PRIDE
         project: PXD010154
         enabled: False
