@@ -14,7 +14,7 @@ elif wc.em == "mix-max":
 else:
     raise ValueError("Wrong value for --tdc: {}".format(wc.em))
 
-out_dir = os.path.dirname(out.f)
+out_dir = os.path.dirname(out.file)
 
 with open(log.o,'w') as lfh:
     with open(log.e,'w') as efh:
