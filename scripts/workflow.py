@@ -7,7 +7,7 @@ from .common import (download_dir,
                      get_samples,
                      is_comet_fmt,
                      is_raw_fmt,
-                     is_wget_url,
+                     is_remote_url,
                      url_basename)
 
 
@@ -132,7 +132,7 @@ def sample_data_file(wildcards,config,samples):
     sample = wildcards.sample
     input_file = samples.loc[(ds,sample),"file"]
 
-    if is_wget_url(input_file):
+    if is_remote_url(input_file):
         file_name = url_basename(input_file)
         dl_dir = download_dir(ds,config)
         input_file = os.path.join(dl_dir,file_name)

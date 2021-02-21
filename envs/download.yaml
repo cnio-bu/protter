@@ -1,5 +1,5 @@
 channels:
     - conda-forge
 dependencies:
+    - curl
     - rhash
-    - wget

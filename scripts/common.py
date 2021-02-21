@@ -175,10 +175,10 @@ def is_raw_fmt(fmt,config):
     return regex.match(fmt) is not None
 
 
-def is_wget_url(file):
-    wget_url_prefix = re.compile("(?:ftp|http|https)://",
-                                 re.IGNORECASE)
-    return wget_url_prefix.match(file) is not None
+def is_remote_url(file):
+    remote_url_prefix = re.compile("(?:ftp|http|https)://",
+                                   re.IGNORECASE)
+    return remote_url_prefix.match(file) is not None
 
 
 def load_config_file(config_file):
@@ -195,7 +195,7 @@ def load_sample_sheet(file):
 
 def pull_download_sheet(samples):
 
-    downloads = samples.loc[samples["file"].apply(is_wget_url),:]
+    downloads = samples.loc[samples["file"].apply(is_remote_url),:]
 
     if "subset" in samples.columns:
         downloads = downloads.loc[~downloads["subset"].isna(),:]
