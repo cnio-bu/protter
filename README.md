@@ -26,11 +26,16 @@ Finnigan LLC vendor library on which it depends. These licenses can be
 viewed in the [ThermoRawFileParser GitHub repository](
 https://github.com/compomics/ThermoRawFileParser).
 
-The protter workflow also depends on the following packages:
+The protter workflow also depends on the following software:
 
+- [Biopython](https://biopython.org/)
+  ([Cock et al. 2009](https://doi.org/10.1093/bioinformatics/btp163))
+  — [Biopython License](https://github.com/biopython/biopython/blob/master/LICENSE.rst)
 - [Crux toolkit](https://crux.ms/)
   ([McIlwain et al. 2014](https://doi.org/10.1021/pr500741y))
   — Apache 2.0 License
+- [curl](https://curl.se)
+  — [MIT/X derivative license](http://curl.haxx.se/docs/copyright.html)
 - [DecoyPYrat](https://anaconda.org/bioconda/decoypyrat)
   ([Wright & Choudhary 2016](https://doi.org/10.4172/jpb.1000404))
   — MIT License
@@ -43,5 +48,7 @@ The protter workflow also depends on the following packages:
   — Apache 2.0 License
 - [requests](https://requests.readthedocs.io/en/master/)
   — Apache 2.0 License
-- [tstk](https://anaconda.org/tdido/tstk)
-  — MIT License
+- [rhash](https://github.com/rhash/RHash)
+  — BSD Zero-Clause License
+- [zlib](http://www.zlib.net)
+  — [zlib License](http://www.zlib.net/zlib_license.html)
