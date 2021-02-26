@@ -56,7 +56,7 @@ def enhance_sample_metadata(ds_tab):
 
         df = pd.read_excel(local_meta_file,sheet_name="Sheet1",
                            usecols=["Raw files","Sample source","Tissue name",
-                                    "Proteases"],
+                                    "Experiments","Proteases"],
                            engine="openpyxl")
 
     study_meta = dict()
@@ -64,6 +64,7 @@ def enhance_sample_metadata(ds_tab):
     for _,row in df.iterrows():
         raw_file_name = row["Raw files"].strip()
         sample_source = row["Sample source"].strip()
+        experiment = row["Experiments"].strip()
         sample_tissue = row["Tissue name"].strip()
         protease = row["Proteases"].lower()
 
@@ -80,6 +81,7 @@ def enhance_sample_metadata(ds_tab):
             continue
 
         study_meta[sample] = {
+            "experiment": experiment,
             "enzyme": protease,
             "tissue": tissue_map[sample_tissue]
         }
@@ -87,10 +89,12 @@ def enhance_sample_metadata(ds_tab):
     ds_tab = ds_tab.loc[~ds_tab["sample"].isin(synthetic_samples)]
 
     subsets = list()
+    experiments = list()
     enzymes = list()
     tissues = list()
     for _,row in ds_tab.iterrows():
         sample = row["sample"]
+        experiment = study_meta[sample]["experiment"]
         enzyme = study_meta[sample]["enzyme"]
         tissue = study_meta[sample]["tissue"]
 
@@ -99,7 +103,9 @@ def enhance_sample_metadata(ds_tab):
         subset = pd.NA if sample == "01323_D03_P013562_S00_N20_R1" else enzyme
 
         subsets.append(subset)
+        experiments.append(experiment)
         enzymes.append(enzyme)
         tissues.append(tissue)
 
-    return ds_tab.assign(subset=subsets,enzyme=enzymes,tissue=tissues)
+    return ds_tab.assign(subset=subsets,experiment=experiments,
+                         enzyme=enzymes,tissue=tissues)
