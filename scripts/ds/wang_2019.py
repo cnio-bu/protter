@@ -55,14 +55,16 @@ def enhance_sample_metadata(ds_tab):
                 shutil.copyfileobj(r.raw,out_f)
 
         df = pd.read_excel(local_meta_file,sheet_name="Sheet1",
-                           usecols=["Raw files","Tissue name","Proteases"],
+                           usecols=["Raw files","Sample source","Tissue name",
+                                    "Proteases"],
                            engine="openpyxl")
 
     study_meta = dict()
     synthetic_samples = set()
     for _,row in df.iterrows():
-        raw_file_name = row["Raw files"]
-        sample_tissue = row["Tissue name"]
+        raw_file_name = row["Raw files"].strip()
+        sample_source = row["Sample source"].strip()
+        sample_tissue = row["Tissue name"].strip()
         protease = row["Proteases"].lower()
 
         # In "Tissues_Rawfile_list.xlsx","01697_B01_P018020_S00_N02_R1.raw"
@@ -73,7 +75,7 @@ def enhance_sample_metadata(ds_tab):
         match = re.match("^(?P<sample>.+)\.raw$", raw_file_name)
         sample = match.groupdict()["sample"]
 
-        if sample_tissue == "-":
+        if sample_source == "Synthetic":
             synthetic_samples.add(sample)
             continue
 
