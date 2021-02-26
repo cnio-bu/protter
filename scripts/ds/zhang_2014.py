@@ -37,17 +37,25 @@ def enhance_sample_metadata(ds_tab):
 
     biosample_regex = re.compile("^(?P<biosample>TCGA-[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)",
                                  re.IGNORECASE)
+    experiment_regex = re.compile("^(?P<experiment>.+)_FR[0-9]+$",
+                                  re.IGNORECASE)
 
     tissues = list()
     biosamples = list()
+    experiments = list()
     for _,row in ds_tab.iterrows():
         match = biosample_regex.match(row["sample"])
         biosample = match["biosample"]
+
+        match = experiment_regex.match(row["sample"])
+        experiment = match["experiment"]
 
         tumor_site = tumor_sites[biosample]
         tissue = tissue_map[tumor_site]
 
         biosamples.append(biosample)
+        experiments.append(experiment)
         tissues.append(tissue)
 
-    return ds_tab.assign(biosample=biosamples,enzyme=enzymes,tissue=tissues)
+    return ds_tab.assign(biosample=biosamples,experiment=experiments,
+                         enzyme=enzymes,tissue=tissues)
