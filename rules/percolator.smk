@@ -1,26 +1,28 @@
-rule extract_pin:
+rule group_pins:
     '''
-        Extract compressed split PIN file.
+        Merge PIN files by group.
     '''
+    # Though it can accept multiple input files, Percolator has raised filestream errors
+    # when run as a shadow rule with multiple PIN files, so we merge them here first.
     input:
-        pin="out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin.gz"
+        pins=group_pin_files
     output:
-        pin=temp("out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin")
+        pin=temp("out/{db}/group_pins/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}.pin")
     log:
-        o="log/{db}/extract_pins/{ds}/{subset}/{sample}.{sdb}.out",
-        e="log/{db}/extract_pins/{ds}/{subset}/{sample}.{sdb}.err"
+        o="log/{db}/group_pins/{ds}/{subset}/{em}/{grouping}.{group}.{sdb}.out",
+        e="log/{db}/group_pins/{ds}/{subset}/{em}/{grouping}.{group}.{sdb}.err"
     resources:
         mem = 8000
     threads: 1
     script:
-        "../scripts/extract_pin.py"
+        "../scripts/group_pins.py"
 
 rule percolator:
     '''
         Run the crux percolator algorithm to separate target from decoy matches.
     '''
     input:
-        files=percolator_input_files
+        file="out/{db}/group_pins/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}.pin"
     output:
         file=temp("out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.target.psms.txt"),
         par="out/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}/{sdb}/percolator.params.txt",

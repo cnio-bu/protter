@@ -120,9 +120,9 @@ def percolator_enzyme(wildcards,config,samples):
     return enzyme
 
 
-def percolator_input_files(wc,samples):
+def group_pin_files(wc,samples):
     group_to_samples = get_samples(wc.ds,wc.subset,wc.grouping,samples)
-    return ["out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin".format(
+    return ["out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin.gz".format(
             db=wc.db,ds=wc.ds,subset=wc.subset,sample=sample,sdb=wc.sdb)
             for sample in group_to_samples[wc.group]]
 

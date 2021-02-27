@@ -14,10 +14,10 @@ from scripts.workflow import (comet_input_file,
                               download_sample_file_checksum,
                               download_sample_file_url,
                               download_sample_output_pattern,
+                              group_pin_files,
                               raw_input_file,
                               mzml_output_pattern,
-                              percolator_enzyme,
-                              percolator_input_files)
+                              percolator_enzyme)
 
 
 configfile: os.path.join(workflow.basedir, "config.yaml")
@@ -41,7 +41,7 @@ download_sample_output_pattern = partial(download_sample_output_pattern, config=
 raw_input_file = partial(raw_input_file, config=config, samples=samples)
 mzml_output_pattern = partial(mzml_output_pattern, config=config)
 comet_input_file = partial(comet_input_file, config=config, samples=samples)
-percolator_input_files = partial(percolator_input_files, samples=samples)
+group_pin_files = partial(group_pin_files, samples=samples)
 percolator_enzyme = partial(percolator_enzyme, config=config, samples=samples)
 
 
