@@ -34,6 +34,11 @@ The protter workflow also depends on the following software:
 - [Crux toolkit](https://crux.ms/)
   ([McIlwain et al. 2014](https://doi.org/10.1021/pr500741y))
   — Apache 2.0 License
+  * [Comet](https://crux.ms/commands/comet.html)
+    ([Eng et al. 2012](https://doi.org/10.1002/pmic.201200439))
+  * [Percolator](https://crux.ms/commands/percolator.html)
+    ([Käll et al. 2007](https://doi.org/10.1038/nmeth1113);
+    [Serang et al. 2010](https://doi.org/10.1021/pr100594k))
 - [curl](https://curl.se)
   — [MIT/X derivative license](http://curl.haxx.se/docs/copyright.html)
 - [DecoyPYrat](https://anaconda.org/bioconda/decoypyrat)
