@@ -15,17 +15,14 @@ rule comet:
         e="log/{db}/comet/{ds}/{subset}/{sample}.{td}.err"
     benchmark:
         "log/{db}/comet/{ds}/{subset}/{sample}.{td}.bmk",
-    params:
-        basename="out/{db}/comet/{ds}/{subset}/{sample}.{td}"
     threads: config["software"]["comet"]["threads"]
     conda:
         "../envs/crux.yaml"
     resources:
         mem = lambda wildcards, attempt: attempt * 8000,
         time = lambda wildcards, attempt: attempt * 120
-    shell:"""
-        crux comet --num_threads {threads} --output_pepxmlfile 0 --output_txtfile 0 --output_percolatorfile 1 --parameter-file {input.params} --output-dir {params.basename} --overwrite T {input.data} {input.db} > {log.o} 2> {log.e}
-    """
+    script:
+        "../scripts/comet.py"
 
 rule split_pins:
     '''
