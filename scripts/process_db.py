@@ -40,9 +40,7 @@ with open(snakemake.output.db,"w") as ofh, open(snakemake.output.meta_file,"w") 
                     counter += 1
 
                     seq = seq.replace("L","I")
-                    m = hashlib.md5()
-                    m.update(seq.encode('utf-8'))
-                    seq_md5 = m.hexdigest()
+                    seq_md5 = hashlib.md5(seq.encode("utf-8")).hexdigest()
                     meta_writer.writerow({"db_name": db, "db_seq_desc": desc, "seq_md5": seq_md5})
                     if seq_md5 in seen:
                         lfh.write("{} sequence ('{}') is duplicated. Ignoring.\n".format(db,desc))
