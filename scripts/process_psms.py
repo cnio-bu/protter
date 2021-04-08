@@ -22,7 +22,7 @@ enzyme = get_group_enzyme(ds,subset,grouping,group,samples,default=default_enzym
 tissue = get_group_meta_value(ds,subset,grouping,group,samples,"tissue")
 
 
-if seq_db in ("gencode","upstream"):
+if seq_db == "gencode":
     prot_to_gene = dict()
     with open(target_meta_file,"r") as mfh:
         reader = csv.DictReader(mfh,dialect="excel-tab")
@@ -33,18 +33,12 @@ if seq_db in ("gencode","upstream"):
                 gene_id = db_seq_id.split("|")[2]
                 bare_gene_id = gene_id.split(".",1)[0]
                 prot_to_gene[protter_id] = bare_gene_id
-            elif seq_db == "upstream" and row["db_name"] == seq_db:
-                protter_id = "seq{}#upstream#".format(counter)
-                db_seq_id = row["db_seq_desc"].split(maxsplit=1)[0]
-                gene_id = db_seq_id.split("|")[0]
-                bare_gene_id = gene_id.split(".",1)[0]
-                prot_to_gene[protter_id] = bare_gene_id
 
 
 with open(input_psm_file,"r") as ifh:
     reader = csv.DictReader(ifh,dialect="excel-tab")
     out_headings = reader.fieldnames + ["enzyme"]
-    if seq_db in ("gencode","upstream"):
+    if seq_db == "gencode":
         out_headings.append("gene id")
     if tissue is not None:
         out_headings.append("tissue")
@@ -55,7 +49,7 @@ with open(input_psm_file,"r") as ifh:
             pep_score = float(row["percolator PEP"])
             if pep_score <= pep_cutoff:
                 row["enzyme"] = enzyme
-                if seq_db in ("gencode","upstream"):
+                if seq_db == "gencode":
                     prot_ids = row["protein id"].split(",")
                     gene_ids = [prot_to_gene[x] if x in prot_to_gene else "NA"
                                 for x in prot_ids]
