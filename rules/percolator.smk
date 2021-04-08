@@ -37,10 +37,9 @@ rule percolator:
     shadow: "minimal"
     threads: 1
     resources:
-        mem = 34000,
-        time = lambda wildcards, attempt: attempt * 480
+        mem = 64000,
+        time = 1440
     benchmark:
         "log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.bmk"
     script:
         "../scripts/percolator.py"
-
