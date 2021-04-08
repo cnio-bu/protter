@@ -19,4 +19,4 @@ out_dir = os.path.dirname(out.file)
 with open(log.o,'w') as lfh:
     with open(log.e,'w') as efh:
         cmd = "crux percolator --decoy_prefix decoy_ --tdc {tdc} --overwrite T --protein T --fido-empirical-protein-q T --protein-enzyme {enzyme} --output-dir {d} {i}".format(tdc = tdc,enzyme=par.enzyme,d=out_dir,i=inp.file)
-        subprocess.call(shlex.split(cmd),stdout=lfh,stderr=efh)
+        subprocess.call(shlex.split(cmd),stdout=lfh,stderr=efh,check=True)
