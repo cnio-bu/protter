@@ -39,6 +39,8 @@ else:
 
 out_dir = os.path.dirname(out.file)
 
+subset_max_train = 1000000
+
 with open(log.o,"w") as out_log_f, open(log.e,"w") as err_log_f:
     with redirect_stdout(out_log_f), redirect_stderr(err_log_f):
 
@@ -58,6 +60,7 @@ with open(log.o,"w") as out_log_f, open(log.e,"w") as err_log_f:
             "--overwrite","T",
             "--protein","T",
             "--fido-empirical-protein-q","T",
+            "--subset-max-train",str(subset_max_train),
             "--protein-enzyme",par.enzyme,
             "--output-dir",out_dir,
             inp.file
