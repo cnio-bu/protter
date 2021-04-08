@@ -20,7 +20,7 @@ rule comet:
     conda:
         "../envs/crux.yaml"
     resources:
-        mem = lambda wildcards, attempt: attempt * 8000,
+        mem = lambda wildcards, attempt: attempt * 12000,
         time = lambda wildcards, attempt: attempt * 120
     script:
         "../scripts/comet.py"
