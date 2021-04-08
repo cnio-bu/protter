@@ -64,7 +64,7 @@ def write_percolator_header(max_precursor_charge,pin_file):
 
 data_file = snakemake.input.data
 seqdb_file = snakemake.input.db
-in_param_file = snakemake.input.params
+in_param_file = snakemake.input.param_file
 out_param_file = snakemake.output.par
 pin_file = snakemake.output.pin
 comet_log_file = snakemake.output.log

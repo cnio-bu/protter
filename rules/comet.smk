@@ -5,7 +5,8 @@ rule comet:
     input:
         data=comet_input_file,
         db="out/{db}/db/{td}.fasta",
-        params=lambda wc: config["software"]["comet"]["params"].format(ds=wc.ds,subset=wc.subset)
+        param_file=lambda wc: config["software"]["comet"]["param_file"].format(ds=wc.ds,
+                                                                               subset=wc.subset)
     output:
         par="out/{db}/comet/{ds}/{subset}/{sample}.{td}/comet.params.txt",
         pin=temp("out/{db}/comet/{ds}/{subset}/{sample}.{td}/comet.target.pin"),
@@ -24,12 +25,37 @@ rule comet:
     script:
         "../scripts/comet.py"
 
+rule filter_pins:
+    '''
+        Filter comet output files by peptide length.
+
+        Comet release 2020.01 supports a 'peptide_length_range' parameter.
+        As of March 2021, the version of Crux toolkit available on Bioconda
+        (Crux version 3.2-0d57cff) includes Comet version 2018.01 rev. 0,
+        which does not support this parameter. As a stopgap, this rule
+        filters PIN files by peptide length.
+    '''
+    input:
+        pin="out/{db}/comet/{ds}/{subset}/{sample}.{td}/comet.target.pin"
+    output:
+        pin=temp("out/{db}/filter_pins/{ds}/{subset}/{sample}.{td}/comet.target.pin")
+    params:
+        peptide_length_range=config["software"]["comet"]["params"]["peptide_length_range"]
+    log:
+        o="log/{db}/filter_pins/{ds}/{subset}/{sample}.{td}.out",
+        e="log/{db}/filter_pins/{ds}/{subset}/{sample}.{td}.err"
+    threads: 1
+    resources:
+        mem = 1000
+    script:
+        "../scripts/filter_pins.py"
+
 rule split_pins:
     '''
         Split the comet output files by db. Merge targets and decoys.
     '''
     input:
-        pins=["out/{{db}}/comet/{{ds}}/{{subset}}/{{sample}}.{td}/comet.target.pin".format(td=td)
+        pins=["out/{{db}}/filter_pins/{{ds}}/{{subset}}/{{sample}}.{td}/comet.target.pin".format(td=td)
               for td in ['target','decoy']]
     output:
         pin="out/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.pin.gz"

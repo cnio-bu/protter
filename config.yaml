@@ -183,7 +183,9 @@ datasets:
 
 software:
     comet:
-        params: res/conf/comet/comet.params.{ds}.{subset}.conf
+        param_file: res/conf/comet/comet.params.{ds}.{subset}.conf
+        params:
+            peptide_length_range: 7 40
         threads: 4
         enabled: True
         fmts: [cms2, ms2, mzML, mzXML]
