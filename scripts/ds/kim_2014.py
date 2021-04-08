@@ -43,6 +43,17 @@ def enhance_sample_metadata(ds_tab):
         ("Fetus","Testis"): "fetal testis"
     }
 
+    excluded_samples = {
+        "Adult_Esophagus_bRP_Elite_37_f01": "excluded - file checksum mismatch",
+        "Adult_Esophagus_bRP_Elite_37_f02": "excluded - file checksum mismatch",
+        "Adult_CD4Tcells_Gel_Velos_30_f42": "excluded - no spectra searched by Comet",
+        "Adult_Monocytes_Gel_Velos_32_f30": "excluded - no spectra searched by Comet",
+        "Fetal_Heart_bRP_Elite_19_f09": "excluded - no spectra searched by Comet",
+        "Fetal_Heart_bRP_Elite_19_f11": "excluded - no spectra searched by Comet",
+        "Fetal_Heart_bRP_Elite_19_f22": "excluded - no spectra searched by Comet",
+        "Fetal_Liver_bRP_Elite_22_f28": "excluded - no spectra searched by Comet"
+    }
+
     base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
     meta_file_name = "Metadata_Draft_map_of_human_proteoms_kim_et_al.xls"
     meta_file_url = "{}/2014/04/PXD000561/{}".format(base_url,meta_file_name)
@@ -81,20 +92,25 @@ def enhance_sample_metadata(ds_tab):
     experiments = list()
     enzymes = list()
     tissues = list()
+    notes = list()
     for _,row in ds_tab.iterrows():
         sample = row["sample"]
         experiment = study_meta[sample]["experiment"]
         enzyme = study_meta[sample]["enzyme"]
         tissue = study_meta[sample]["tissue"]
 
-        # File "Adult_CD4Tcells_Gel_Velos_30_f42.raw" does not
-        # yield a Comet output file, so we effectively exclude it.
-        subset = pd.NA if sample == "Adult_CD4Tcells_Gel_Velos_30_f42" else enzyme
+        if sample in excluded_samples:
+            note = excluded_samples[sample]
+            subset = pd.NA
+        else:
+            note = pd.NA
+            subset = enzyme
 
         subsets.append(subset)
         experiments.append(experiment)
         enzymes.append(enzyme)
         tissues.append(tissue)
+        notes.append(note)
 
     return ds_tab.assign(subset=subsets,experiment=experiments,
-                         enzyme=enzymes,tissue=tissues)
+                         enzyme=enzymes,tissue=tissues,notes=notes)

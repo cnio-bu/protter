@@ -43,6 +43,10 @@ def enhance_sample_metadata(ds_tab):
         "urinary bladder": "urinary bladder"
     }
 
+    excluded_samples = {
+        "01323_D03_P013562_S00_N20_R1": "excluded - RAW file conversion error"
+    }
+
     base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
     meta_file_name = "Tissues_Rawfile_list.xlsx"
     meta_file_url = "{}/2019/07/PXD010154/{}".format(base_url,meta_file_name)
@@ -92,20 +96,25 @@ def enhance_sample_metadata(ds_tab):
     experiments = list()
     enzymes = list()
     tissues = list()
+    notes = list()
     for _,row in ds_tab.iterrows():
         sample = row["sample"]
         experiment = study_meta[sample]["experiment"]
         enzyme = study_meta[sample]["enzyme"]
         tissue = study_meta[sample]["tissue"]
 
-        # File "01323_D03_P013562_S00_N20_R1.raw" cannot be converted
-        # to mzML format without error, so we effectively exclude it.
-        subset = pd.NA if sample == "01323_D03_P013562_S00_N20_R1" else enzyme
+        if sample in excluded_samples:
+            note = excluded_samples[sample]
+            subset = pd.NA
+        else:
+            note = pd.NA
+            subset = enzyme
 
         subsets.append(subset)
         experiments.append(experiment)
         enzymes.append(enzyme)
         tissues.append(tissue)
+        notes.append(note)
 
     return ds_tab.assign(subset=subsets,experiment=experiments,
-                         enzyme=enzymes,tissue=tissues)
+                         enzyme=enzymes,tissue=tissues,notes=notes)
