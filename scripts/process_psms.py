@@ -1,6 +1,4 @@
 import csv
-import os
-import sys
 
 from common import get_group_enzyme,get_group_meta_value,load_sample_sheet
 
@@ -18,12 +16,6 @@ grouping = snakemake.wildcards.grouping
 group = snakemake.wildcards.group
 
 default_enzyme = snakemake.config["software"]["percolator"]["default_enzyme"]
-
-# Short-circuit for empty PSM file.
-if os.stat(input_psm_file).st_size == 0:
-    with open(output_psm_file,"w") as ofh:
-        pass
-    sys.exit()
 
 samples = load_sample_sheet(sample_meta_file)
 enzyme = get_group_enzyme(ds,subset,grouping,group,samples,default=default_enzyme)
