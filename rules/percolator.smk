@@ -37,7 +37,7 @@ rule percolator:
     shadow: "minimal"
     threads: 1
     resources:
-        mem = 64000,
+        mem = lambda wildcards, attempt: attempt * 64000,
         time = 1440
     benchmark:
         "log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.bmk"
