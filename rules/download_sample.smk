@@ -20,7 +20,7 @@ rule download_sample:
         mem = 1000,
         bandwidth = 2  # MB/s
     shell:"""
-        curl --silent --show-error --retry 17 --limit-rate "{resources.bandwidth}m" \
+        curl --silent --show-error --retry 59 --limit-rate "{resources.bandwidth}m" \
             {params.file_url} --output {output.data_file} 1>{log.o} 2>{log.e}
 
         rhash --printf="%h" {output.data_file} -o {output.cksum_file} \
