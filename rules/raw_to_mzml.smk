@@ -17,7 +17,9 @@ rule raw_to_mzml:
     resources:
         mem = 8000
     shell:"""
-        ThermoRawFileParser -f=2 --gzip \
+        # We need to ensure logging is activated to make sure that
+        # there is appropriate error output if anything goes wrong.
+        ThermoRawFileParser -f=2 --gzip logging=1 \
             --input={input.raw_file} 1>{log.o} 2>{log.e}
 
         tmp_mzml_file=$(echo "{input.raw_file}" | sed 's/\.raw$//i')".mzML.gz"
