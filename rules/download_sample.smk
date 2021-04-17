@@ -38,7 +38,7 @@ rule download_sample:
 
 rule confirm_checksums:
     '''
-        Confirm checksums for all downloaded files in a dataset.
+        Confirm checksums for all dataset files that have been downloaded.
     '''
     input:
         cksum_files=lambda wc: [
