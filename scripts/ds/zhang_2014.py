@@ -50,4 +50,5 @@ def enhance_sample_metadata(ds_tab):
         biosamples.append(biosample)
         tissues.append(tissue)
 
-    return ds_tab.assign(biosample=biosamples,enzyme=enzymes,tissue=tissues)
+    ds_tab = ds_tab.assign(biosample=biosamples,enzyme=enzymes,tissue=tissues)
+    return ds_tab.sort_values(by=["biosample","sample"])

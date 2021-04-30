@@ -116,5 +116,6 @@ def enhance_sample_metadata(ds_tab):
         tissues.append(tissue)
         notes.append(note)
 
-    return ds_tab.assign(subset=subsets,experiment=experiments,
+    ds_tab = ds_tab.assign(subset=subsets,experiment=experiments,
                          enzyme=enzymes,tissue=tissues,notes=notes)
+    return ds_tab.sort_values(by=["experiment","sample"])

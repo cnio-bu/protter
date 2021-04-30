@@ -10,4 +10,5 @@ def enhance_sample_metadata(ds_tab):
         experiment = match.groupdict()["experiment"]
         experiments.append(experiment)
 
-    return ds_tab.assign(experiment=experiments,enzyme=enzymes)
+    ds_tab = ds_tab.assign(experiment=experiments,enzyme=enzymes)
+    return ds_tab.sort_values(by=["experiment","sample"])
