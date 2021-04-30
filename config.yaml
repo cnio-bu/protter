@@ -3,7 +3,7 @@ dbs:
         paths:
             crud: res/data/seq/crud/crud.fasta.gz
             gencode: res/data/seq/gencode/gencode.v36.pc_translations.fa.gz
-            upstream: res/data/seq/upstream/Sutured_upstream.faa.gz
+            ncx: res/data/seq/ncx/NCX_20210225.fa.gz
         tax: human
         enabled: True
     GENCODEv33_20200420:
@@ -81,6 +81,8 @@ datasets:
         fmt: mzML
         dbs:
             - GENCODEv36
+        groupings:
+            - biosample
         urls:
             pub: https://doi.org/10.1038/nature13438
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD002080
@@ -91,16 +93,20 @@ datasets:
         fmt: raw
         dbs:
             - GENCODEv36
+        groupings:
+            - experiment
         urls:
             pub: https://doi.org/10.1016/j.cell.2020.08.036
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD016999
     wang_2019:
         source: PRIDE
         project: PXD010154
-        enabled: False
+        enabled: True
         fmt: raw
         dbs:
-            - GENCODEv33
+            - GENCODEv36
+        groupings:
+            - experiment
         urls:
             pub: https://doi.org/10.15252/msb.20188503
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD010154
@@ -122,10 +128,12 @@ datasets:
     kim_2014:
         source: PRIDE
         project: PXD000561
-        enabled: False
+        enabled: True
         fmt: raw
         dbs:
-            - GENCODEv33_20200420
+            - GENCODEv36
+        groupings:
+            - experiment
         urls:
             pub: https://www.nature.com/articles/nature13302
             data: https://www.ebi.ac.uk/pride/archive/projects/PXD000561
