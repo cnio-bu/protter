@@ -80,7 +80,7 @@ def enhance_sample_metadata(ds_tab):
         enzyme = row["Enzyme"].lower()
 
         match = re.match("^(?P<sample>.+)\.raw$", raw_file_name)
-        sample = match.groupdict()["sample"]
+        sample = match["sample"]
 
         study_meta[sample] = {
             "experiment": experiment,
@@ -113,5 +113,5 @@ def enhance_sample_metadata(ds_tab):
         notes.append(note)
 
     ds_tab = ds_tab.assign(subset=subsets,experiment=experiments,
-                         enzyme=enzymes,tissue=tissues,notes=notes)
+                           enzyme=enzymes,tissue=tissues,notes=notes)
     return ds_tab.sort_values(by=["experiment","sample"])

@@ -13,9 +13,8 @@ with open(out_log_file,"w") as out_log_f, open(err_log_file,"w") as err_log_f:
 
         pep_len_rng_regex = re.compile("^(?P<min_pep_len>[0-9]+)\s+(?P<max_pep_len>[0-9]+)$")
         match = pep_len_rng_regex.match(peptide_length_range)
-        groups = match.groupdict()
-        min_pep_len = int(groups["min_pep_len"])
-        max_pep_len = int(groups["max_pep_len"])
+        min_pep_len = int(match["min_pep_len"])
+        max_pep_len = int(match["max_pep_len"])
 
         with open(in_pin_file,"r") as in_f, open(out_pin_file,"w") as out_f:
 

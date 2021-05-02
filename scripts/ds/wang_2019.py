@@ -78,7 +78,7 @@ def enhance_sample_metadata(ds_tab):
             raw_file_name = "01697_B01_P018020_S00_N02_R1.raw"
 
         match = re.match("^(?P<sample>.+)\.raw$", raw_file_name)
-        sample = match.groupdict()["sample"]
+        sample = match["sample"]
 
         if sample_source == "Synthetic":
             synthetic_samples.add(sample)
@@ -117,5 +117,5 @@ def enhance_sample_metadata(ds_tab):
         notes.append(note)
 
     ds_tab = ds_tab.assign(subset=subsets,experiment=experiments,
-                         enzyme=enzymes,tissue=tissues,notes=notes)
+                           enzyme=enzymes,tissue=tissues,notes=notes)
     return ds_tab.sort_values(by=["experiment","sample"])
