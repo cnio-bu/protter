@@ -43,9 +43,7 @@ with open(out_log_file,"w") as out_log_f, open(err_log_file,"w") as err_log_f:
 
                 if cksum_file_name in obs_cksum_file_names:
                     cksum_file_path = os.path.join(dl_dir,cksum_file_name)
-                    dl_file_path,cksum_file_ext = os.path.splitext(cksum_file_path)
-                    dl_file_name = os.path.basename(dl_file_path)
-                    sample,file_ext,gzip_ext = split_gzip_ext(dl_file_name)
+                    dl_file_path = os.path.join(dl_dir,sample_file_name)
 
                     exp_cksum = ds_meta[sample]["checksum"]
                     with open(cksum_file_path) as in_f:
@@ -54,7 +52,7 @@ with open(out_log_file,"w") as out_log_f, open(err_log_file,"w") as err_log_f:
                         raise ValueError(
                             "checksum mismatch for file: '{}'".format(dl_file_path))
 
-                out_f.write("{}  {}\n".format(obs_cksum,dl_file_name))
+                    out_f.write("{}  {}\n".format(obs_cksum,sample_file_name))
 
         for cksum_file_name in input_cksum_file_names:
             if cksum_file_name not in exp_cksum_file_names:
