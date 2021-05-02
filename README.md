@@ -16,6 +16,8 @@ by specifying one or more PRIDE project accessions.
 
 ## Dependencies
 
+This workflow requires Python 3.6 or greater.
+
 For conversion of mass spectrometry data from Thermo RAW
 formats to the standard mzML format, this workflow depends on
 [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser)
