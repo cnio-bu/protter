@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import csv
 
 from common import get_group_enzyme,get_group_meta_value,load_sample_sheet
@@ -19,7 +20,12 @@ default_enzyme = snakemake.config["software"]["percolator"]["default_enzyme"]
 
 samples = load_sample_sheet(sample_meta_file)
 enzyme = get_group_enzyme(ds,subset,grouping,group,samples,default=default_enzyme)
-tissue = get_group_meta_value(ds,subset,grouping,group,samples,"tissue")
+
+group_meta = OrderedDict()  # Ensure consistent metadata column order.
+for meta_key in ("tissue","cell_line"):
+    meta_value = get_group_meta_value(ds,subset,grouping,group,samples,meta_key)
+    if meta_value is not None:
+        group_meta[meta_key] = meta_value
 
 
 if seq_db == "gencode":
@@ -40,8 +46,7 @@ with open(input_psm_file,"r") as ifh:
     out_headings = reader.fieldnames + ["enzyme"]
     if seq_db == "gencode":
         out_headings.append("gene id")
-    if tissue is not None:
-        out_headings.append("tissue")
+    out_headings.extend(group_meta.keys())
     with open(output_psm_file,"w") as ofh:
         writer = csv.DictWriter(ofh,out_headings,dialect="excel-tab")
         writer.writeheader()
@@ -54,6 +59,5 @@ with open(input_psm_file,"r") as ifh:
                     gene_ids = [prot_to_gene[x] if x in prot_to_gene else "NA"
                                 for x in prot_ids]
                     row["gene id"] = ",".join(gene_ids)
-                if tissue is not None:
-                    row["tissue"] = tissue
+                row.update(group_meta)
                 writer.writerow(row)
