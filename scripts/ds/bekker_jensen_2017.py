@@ -85,6 +85,13 @@ def enhance_sample_metadata(ds_tab):
         }
     )
 
+    excluded_samples = {
+        "20151008_QE5_UPLC10_DBJ_SA_COLON_human_46frac_34_151014141957": "excluded - RAW file conversion error",
+        "20151008_QE5_UPLC10_DBJ_SA_LIVER_human_46frac_13_151011001441": "excluded - no spectra searched by Comet",
+        "20151008_QE5_UPLC10_DBJ_SA_LIVER_human_46frac_14_151011091039": "excluded - no spectra searched by Comet",
+        "20151008_QE5_UPLC10_DBJ_SA_LIVER_human_46frac_18": "excluded - RAW file conversion error"
+    }
+
     base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
     meta_file_names = [
         "sdrf-celllines.tsv",
@@ -141,10 +148,12 @@ def enhance_sample_metadata(ds_tab):
                     "cell_line": row.get("cell_line",default=pd.NA)
                 }
 
+    subsets = list()
     experiments = list()
     enzymes = list()
     tissues = list()
     cell_lines = list()
+    notes = list()
     for sample in ds_tab["sample"]:
 
         if sample in study_meta:
@@ -155,11 +164,21 @@ def enhance_sample_metadata(ds_tab):
             raise ValueError(
                 "no metadata found for sample '{}'".format(sample))
 
+        if sample in excluded_samples:
+            note = excluded_samples[sample]
+            subset = pd.NA
+        else:
+            note = pd.NA
+            subset = enzyme
+
+        subsets.append(subset)
         experiments.append(sample_meta["experiment"])
         enzymes.append(sample_meta["enzyme"])
         tissues.append(sample_meta["tissue"])
         cell_lines.append(sample_meta["cell_line"])
+        notes.append(note)
 
-    ds_tab = ds_tab.assign(subset=enzymes,experiment=experiments,
-                           enzyme=enzymes,tissue=tissues,cell_line=cell_lines)
+    ds_tab = ds_tab.assign(subset=subsets,experiment=experiments,enzyme=enzymes,
+                           tissue=tissues,cell_line=cell_lines,note=notes)
     return ds_tab.sort_values(by=["experiment","sample"])
+
