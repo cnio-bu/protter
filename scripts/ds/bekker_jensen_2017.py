@@ -145,8 +145,7 @@ def enhance_sample_metadata(ds_tab):
     enzymes = list()
     tissues = list()
     cell_lines = list()
-    for _,row in ds_tab.iterrows():
-        sample = row["sample"]
+    for sample in ds_tab["sample"]:
 
         if sample in study_meta:
             sample_meta = study_meta[sample]

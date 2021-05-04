@@ -40,8 +40,8 @@ def enhance_sample_metadata(ds_tab):
 
     tissues = list()
     biosamples = list()
-    for _,row in ds_tab.iterrows():
-        match = biosample_regex.match(row["sample"])
+    for sample in ds_tab["sample"]:
+        match = biosample_regex.match(sample)
         biosample = match["biosample"]
 
         tumor_site = tumor_sites[biosample]

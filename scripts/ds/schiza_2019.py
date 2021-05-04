@@ -20,8 +20,7 @@ def enhance_sample_metadata(ds_tab):
 
     experiments = list()
     dropped_samples = set()
-    for _,row in ds_tab.iterrows():
-        sample = row["sample"]
+    for sample in ds_tab["sample"]:
 
         match = rel_sample_regex.match(sample)
         if match:

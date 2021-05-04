@@ -93,8 +93,7 @@ def enhance_sample_metadata(ds_tab):
     enzymes = list()
     tissues = list()
     notes = list()
-    for _,row in ds_tab.iterrows():
-        sample = row["sample"]
+    for sample in ds_tab["sample"]:
         experiment = study_meta[sample]["experiment"]
         enzyme = study_meta[sample]["enzyme"]
         tissue = study_meta[sample]["tissue"]
