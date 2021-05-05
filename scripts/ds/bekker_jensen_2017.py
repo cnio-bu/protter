@@ -169,7 +169,7 @@ def enhance_sample_metadata(ds_tab):
             subset = pd.NA
         else:
             note = pd.NA
-            subset = enzyme
+            subset = sample_meta["enzyme"]
 
         subsets.append(subset)
         experiments.append(sample_meta["experiment"])
