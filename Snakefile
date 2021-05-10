@@ -1,5 +1,6 @@
 from functools import partial
 import os
+import re
 
 import pandas as pd
 
@@ -32,8 +33,8 @@ samples = load_sample_sheet(sample_file)
 downloads = pull_download_sheet(samples)
 
 wildcard_constraints:
-    dl_file = "|".join(downloads["dl_file"]),
-    sample = "|".join(samples["sample"])
+    dl_file = "|".join(re.escape(x) for x in downloads["dl_file"]),
+    sample = "|".join(re.escape(x) for x in samples["sample"])
 
 download_sample_file_checksum = partial(download_sample_file_checksum, downloads=downloads)
 download_sample_file_url = partial(download_sample_file_url, downloads=downloads)

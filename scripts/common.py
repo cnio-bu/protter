@@ -11,7 +11,7 @@ import yaml
 
 
 def _get_fmt_regex(fmts):
-    pattern = "^({})$".format("|".join(fmts))
+    pattern = "^({})$".format("|".join(re.escape(x) for x in fmts))
     return re.compile(pattern,re.IGNORECASE)
 
 

@@ -15,9 +15,10 @@ def enhance_sample_metadata(ds_tab):
         "PreV-030",
         "PreV-064"
     ]
+    rel_exp_patt = "|".join(re.escape(x) for x in rel_experiments)
 
     rel_sample_regex = re.compile(
-        "^(?P<experiment>{})_Fr.+_R[12](?:_[0-9]+)?$".format("|".join(rel_experiments))
+        "^(?P<experiment>{})_Fr.+_R[12](?:_[0-9]+)?$".format(rel_exp_patt)
     )
 
     excluded_samples = {
