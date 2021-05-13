@@ -197,17 +197,24 @@ def pull_download_sheet(samples):
 
     downloads = samples.loc[samples["file"].apply(is_remote_url),:]
 
-    if "subset" in samples.columns:
-        downloads = downloads.loc[~downloads["subset"].isna(),:]
+    if len(downloads) > 0:
 
-    if downloads["checksum"].isna().any():
-        raise ValueError("all download files must have an associated checksum")
+        if "subset" in samples.columns:
+            downloads = downloads.loc[~downloads["subset"].isna(),:]
 
-    downloads = downloads[["dataset","file","checksum"]].assign(
-        dl_file=downloads["file"].apply(url_basename))
+        if downloads["checksum"].isna().any():
+            raise ValueError("all download files must have an associated checksum")
 
-    return downloads.set_index(["dataset","dl_file"],drop=False,
-                               verify_integrity=True)
+        downloads = downloads[["dataset","file","checksum"]].assign(
+            dl_file=downloads["file"].apply(url_basename))
+
+        downloads = downloads.set_index(["dataset","dl_file"],drop=False,
+                                        verify_integrity=True)
+    else:
+        downloads = pd.DataFrame(columns=["dataset","file","checksum","dl_file"
+                                          ]).set_index(["dataset","dl_file"], drop=False)
+
+    return downloads
 
 
 @RateLimiter(max_calls=3, period=1)
