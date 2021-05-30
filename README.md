@@ -59,3 +59,8 @@ The protter workflow also depends on the following software:
   — BSD Zero-Clause License
 - [zlib](http://www.zlib.net)
   — [zlib License](http://www.zlib.net/zlib_license.html)
+
+With specific datasets for which metadata is obtained from an Excel
+file, packages such as [xlrd](https://pypi.org/project/xlrd/) or
+[openpyxl](https://openpyxl.readthedocs.io/en/stable/) may also
+be required to open XLS or XLSX files, respectively.
