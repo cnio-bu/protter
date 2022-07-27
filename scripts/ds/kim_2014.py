@@ -54,7 +54,7 @@ def enhance_sample_metadata(ds_tab):
         "Fetal_Liver_bRP_Elite_22_f28": "excluded - no spectra searched by Comet"
     }
 
-    base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
+    base_url = "http://ftp.pride.ebi.ac.uk/pride-archive"
     meta_file_name = "Metadata_Draft_map_of_human_proteoms_kim_et_al.xls"
     meta_file_url = "{}/2014/04/PXD000561/{}".format(base_url,meta_file_name)
 
