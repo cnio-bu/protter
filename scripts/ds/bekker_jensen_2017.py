@@ -92,7 +92,7 @@ def enhance_sample_metadata(ds_tab):
         "20151008_QE5_UPLC10_DBJ_SA_LIVER_human_46frac_18": "excluded - RAW file conversion error"
     }
 
-    base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
+    base_url = "http://ftp.pride.ebi.ac.uk/pride-archive"
     meta_file_names = [
         "sdrf-celllines.tsv",
         "sdrf-tissues.tsv"

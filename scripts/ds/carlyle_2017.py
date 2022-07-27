@@ -22,7 +22,7 @@ def enhance_sample_metadata(ds_tab):
         "sampleAccession": "biosample"
     }
 
-    base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
+    base_url = "http://ftp.pride.ebi.ac.uk/pride-archive"
     meta_file_name = "sdrf.tsv"
     meta_file_url = "{}/2018/01/PXD005445/{}".format(base_url,meta_file_name)
 

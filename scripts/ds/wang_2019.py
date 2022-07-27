@@ -47,7 +47,7 @@ def enhance_sample_metadata(ds_tab):
         "01323_D03_P013562_S00_N20_R1": "excluded - RAW file conversion error"
     }
 
-    base_url = "http://ftp.pride.ebi.ac.uk/pride/data/archive"
+    base_url = "http://ftp.pride.ebi.ac.uk/pride-archive"
     meta_file_name = "Tissues_Rawfile_list.xlsx"
     meta_file_url = "{}/2019/07/PXD010154/{}".format(base_url,meta_file_name)
 
