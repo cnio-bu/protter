@@ -12,7 +12,7 @@ rule group_pins:
         o="log/{db}/group_pins/{ds}/{subset}/{em}/{grouping}.{group}.{sdb}.out",
         e="log/{db}/group_pins/{ds}/{subset}/{em}/{grouping}.{group}.{sdb}.err"
     resources:
-        mem = 8000
+        mem_mb = 8000
     threads: 1
     script:
         "../scripts/group_pins.py"
@@ -37,7 +37,8 @@ rule percolator:
     shadow: "minimal"
     threads: 1
     resources:
-        mem = lambda wildcards, attempt: attempt * 64000,
+        #mem_mb = lambda wildcards, attempt: attempt * 64000,
+        mem_mb = lambda wildcards, attempt: attempt * 128000,
         time = 1440
     benchmark:
         "log/{db}/percolator/{ds}/{subset}/{em}/{grouping}/{group}.{sdb}.bmk"

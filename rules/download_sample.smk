@@ -17,7 +17,7 @@ rule download_sample:
     conda:
         "../envs/download.yaml"
     resources:
-        mem = 1000,
+        mem_mb = 1000,
         bandwidth = 2  # MB/s
     shell:"""
         curl --silent --show-error --retry 59 --limit-rate "{resources.bandwidth}m" \

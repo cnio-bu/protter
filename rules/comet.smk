@@ -20,7 +20,7 @@ rule comet:
     conda:
         "../envs/crux.yaml"
     resources:
-        mem = lambda wildcards, attempt: attempt * 12000,
+        mem_mb = lambda wildcards, attempt: attempt * 12000,
         time = lambda wildcards, attempt: attempt * 120
     script:
         "../scripts/comet.py"
@@ -46,7 +46,7 @@ rule filter_pins:
         e="log/{db}/filter_pins/{ds}/{subset}/{sample}.{td}.err"
     threads: 1
     resources:
-        mem = 1000
+        mem_mb = 1000
     script:
         "../scripts/filter_pins.py"
 
@@ -62,7 +62,7 @@ rule split_pins:
     log:
         o="log/{db}/split_pins/{ds}/{subset}/{sample}.{sdb}.out"
     resources:
-        mem = 8000
+        mem_mb = 8000
     threads: 1
     run:
         import gzip

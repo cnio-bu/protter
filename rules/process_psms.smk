@@ -19,6 +19,6 @@ rule process_psms:
     conda:
         "../envs/common.yaml"
     resources:
-        mem = 8000
+        mem_mb = 8000
     script:
         "../scripts/process_psms.py"

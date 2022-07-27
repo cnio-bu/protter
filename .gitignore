@@ -7,9 +7,10 @@ out
 profiles/*
 res/data/*
 res/downloads/*
-res/conf/comet/*
+#res/conf/comet/*
 res/conf/subsets/*
 !res/conf/comet/comet.params.orbitrap.conf
 tmp
 jdk*
 launch.sh
+logs_slurm
