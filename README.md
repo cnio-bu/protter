@@ -8,6 +8,26 @@ Allows for the easy addition of datasets and search engines.
 
 ## Usage
 
+### Removing readthrough transcripts, PAR_Y genes and duplicates
+
+Sometimes it could be useful and interesting to delete the sequences tagged as 
+readthrough transcripts and the chromosome Y pseudoautosomal regions (PAR) from
+the translations file. Also it is useful to use a non-redundant FASTA file.
+
+
+It is possible to get this file through the following script; which needs the
+transcript file and the GTF of the desired gencode version. It can be run from the
+workflow directory as follows:
+```shell
+python scripts/clean_pc_translations.py path/to/gencode.v{version}.pc_translations.fa.gz path/to/gencode.v{version}.annotation.gtf
+```
+
+A transcript file will be obtained in the same folder as the original file and with the
+extension `.NoRT.u.fa.gz`. This indicates that the readthroughs and the PAR_Y (NoRT)
+have been eliminated and that the sequences that appear are unique (u). This output,
+file 'gencode.v{version}.pc_translations.NoRT.u.fa.gz', is the one that should be
+indicated in the protter config.yaml file.
+
 ### Preparing a sample sheet
 
 A TSV sample sheet is necessary to run the workflow. At a minimum, this should
