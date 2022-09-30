@@ -5,7 +5,7 @@ log.txt*
 out
 *.swp
 profiles/*
-#res/data/*
+res/data/*
 res/data/prot
 res/downloads/*
 #res/conf/comet/*
@@ -15,3 +15,4 @@ tmp
 jdk*
 launch.sh
 logs_slurm
+protter_psm_output.zip
