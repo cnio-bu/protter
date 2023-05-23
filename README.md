@@ -99,6 +99,20 @@ The input config YAML file is used to determine the datasets
 for which PSM files should be gathered, and the output ZIP
 archive contains all the output PSM files for those datasets.
 
+### Processing PSM files for APPRIS's Proteo
+
+If the protter output is going to be used as part of APPRIS it is necessary to 
+perform post-processing to obtain the final CSV file. To do this, a script has 
+been prepared that takes the `protter_psm_output.zip` file and the `config.yaml` 
+file as input; and can be run from the
+workflow directory as follows:
+```shell
+python scripts/postprocessing_for_proteo.py config.yaml protter_psm_output.zip
+```
+
+This script creates a CSV file for each enabled database in `config.yaml` and saves 
+them in the same path that the PSMs zipped file. The files name is `proteo_{database}.csv`.
+
 ### Troubleshooting
 
 There are several steps of the workflow during which issues may arise.
