@@ -323,6 +323,7 @@ if __name__ == "__main__":
         print("\tCreating PROTEO file for '{}'...".format(db))  
         allsemitryps = pd.read_csv(os.path.join(psm_path, db, 'All.semitryps.tsv'), sep = "\t", header = 0)
         proteo_file = allsemitryps.sort_values('geneid').reset_index(drop=True)
+        proteo_file = proteo_file['peptide','geneid','matched','not matched','count','percolator PEP','tissues']
         proteo_file.to_csv(os.path.join(psm_path,'proteo_'+db+'.csv'), sep = ",", header = True, index = False)
         print("{} FINISHED\n".format(db))
         
