@@ -200,6 +200,7 @@ def extract_peps_hash(transl_file, in_tsv, out_tsv):
 def filter_semitryptics(transl_file, in_tsv, out_tsv):
     transseq = {}
 
+    # Load transcripts file
     with gzip.open(transl_file, "rt") as handle:
         for record in SeqIO.parse(handle, "fasta"):
 
@@ -207,7 +208,7 @@ def filter_semitryptics(transl_file, in_tsv, out_tsv):
             enstrans = chunks[1]
             ensgene = chunks[2]
             seq = str(record.seq).replace('L', 'I')
-            transseq[enstrans] = seq
+            transseq[enstrans] = seq + "Z" # We add a 'Z' to check later if terminal C
 
     with open(in_tsv, 'r') as in_file, open(out_tsv, 'w') as out_file:
 
@@ -225,15 +226,37 @@ def filter_semitryptics(transl_file, in_tsv, out_tsv):
             letters = [*peptide]
 
             # Remove semi-tryps
-            if not (letters[-1] == "R" or letters[-1] == "K"):
-                continue
+            if letters[-1] == "R" or letters[-1] == "K":
+                typeC = "Tryptic"
+            else:
+                typeC = "NTP"
 
             for i in haspep:
                 transseq[i] = transseq[i].replace('L','I')
                 letters = transseq[i].split(peptide)
-                if letters[0] == "X":
-                    continue
+                if letters[0].endswith('K') or letters[0].endswith('R'):
+                    typeN = "Tryptic"
+                    break
+                elif letters[0] == "M":
+                    typeN = "Start-M"
+                    break
+                elif letters[0] == "X":
+                    typeN = "Semi-X"
+                elif transseq[i].startswith(peptide):
+                    typeN = "Start"
+                    break
+            if typeN == "Semi" or typeN == "Semi-X":
+                continue 
 
+            for i in haspep:
+                transseq[i] = transseq[i].replace('L','I')
+                letters = transseq[i].split(peptide)
+                if letters[-1] == "Z":
+                    typeC = "End"
+                    break
+            if typeC == "NTP":
+                continue
+            
             # Remove peptides with 1 PSM, wrong PEP score or wrong lenght
             peplen = len(peptide)
             PEPscore = float(chunks[4])
@@ -323,7 +346,7 @@ if __name__ == "__main__":
         print("\tCreating PROTEO file for '{}'...".format(db))  
         allsemitryps = pd.read_csv(os.path.join(psm_path, db, 'All.semitryps.tsv'), sep = "\t", header = 0)
         proteo_file = allsemitryps.sort_values('geneid').reset_index(drop=True)
-        proteo_file = proteo_file['peptide','geneid','matched','not matched','count','percolator PEP','tissues']
+        proteo_file = proteo_file[['peptide','geneid','matched','not matched','count','percolator PEP','tissues']]
         proteo_file.to_csv(os.path.join(psm_path,'proteo_'+db+'.csv'), sep = ",", header = True, index = False)
         print("{} FINISHED\n".format(db))
         
