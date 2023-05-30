@@ -90,6 +90,8 @@ def make_unique(in_tsv, out_tsv):
 
                 tag = ""
                 genes = old_genes.split(",")
+                # Remove NAs that comes from 'crud'
+                genes = [item for item in genes if item != 'NA']
                 if not (len(set(genes))==1):
                     tag = "Moonlighting"
 
