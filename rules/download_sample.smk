@@ -17,6 +17,7 @@ rule download_sample:
     conda:
         "../envs/download.yaml"
     resources:
+        walltime = 1440,
         mem_mb = 1000,
         bandwidth = 2  # MB/s
     shell:"""
