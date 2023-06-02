@@ -1,0 +1,16 @@
+name: protter
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python=3.10 # Setted version due to ratelimiter has problems with python 3.11
+  - snakemake
+  - pandas
+  - pip
+  - openpyxl
+  - xlrd
+  - biopython
+  - pip:
+    - ratelimiter

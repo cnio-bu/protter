@@ -8,6 +8,22 @@ Allows for the easy addition of datasets and search engines.
 
 ## Usage
 
+To run this pipeline, some previous steps can be performed to prepare the input files; and some subsequent steps to process the output files.
+
+### Create conda enviroment
+
+Although not required, it is recommended to use the provided `conda` environment to launch the protter pipeline, in addition to the external pre and post-processing scripts. This environment contains snakemake, as well as some of the necessary dependencies that are not contained in the pipeline's own `conda` microenvironments. (See [Dependencies](#dependencies))
+
+You need to have a version of `conda` installed. We recommend Mambaforge, which has Mamba installed in the base environment. To create it, just run inside the base folder of the protter:
+```shell
+mamba env create -f res/conf/protter-env.yaml
+```
+
+And once all the dependencies have been installed, activate the environment with:
+```shell
+mamba activate protter
+```
+
 ### Removing readthrough transcripts, PAR_Y genes and duplicates
 
 Sometimes it could be useful and interesting to delete the sequences tagged as 
@@ -64,7 +80,7 @@ it has the same name as the dataset and contains a working
 Whether the datasets in a sample sheet are known or unknown, it is
 recommended to review the sample sheet before running the workflow.
 
-#### Splitting a sample sheet
+#### $\rightarrow$ Splitting a sample sheet
 
 It may be necessary to split a sample sheet into multiple parts, if for example,
 it would take too long to run a workflow for all the samples in a single run. In
@@ -80,12 +96,12 @@ smaller sample sheets, which can then be processed in separate workflow runs.
 The `protter` workflow can be run just like any other Snakemake workflow,
 whether by specifying the number of cores and other parameters as needed…
 ```shell
-snakemake --cores 1
+snakemake --use-conda --cores 1
 ```
 
-…or by specifying a Snakemake profile:
+…or if using some HPC cluster, like CNIO's, by specifying a slurm profile:
 ```shell
-snakemake --profile protter
+snakemake --use-conda --profile $SMK_PROFILE_SLURM -j 10
 ```
 
 ### Gathering output PSM files
@@ -113,11 +129,11 @@ python scripts/postprocessing_for_proteo.py config.yaml protter_psm_output.zip
 This script creates a CSV file for each enabled database in `config.yaml` and saves 
 them in the same path that the PSMs zipped file. The files name is `proteo_{database}.csv`.
 
-### Troubleshooting
+## Troubleshooting
 
 There are several steps of the workflow during which issues may arise.
 
-#### download_sample
+### download_sample
 
 When a sample download fails, it should be possible to identify the cause of
 failure from the Snakemake log files. However, sometimes a download fails simply
@@ -129,7 +145,7 @@ same dataset will be processed multiple times, it is recommended to download
 sample files separately and configure the sample sheet with their local file
 paths.
 
-#### raw_to_mzml
+### raw_to_mzml
 
 In a small number of cases, an error may occur while converting a RAW file to
 mzML format.
@@ -142,7 +158,7 @@ sample can be dropped from the workflow, either by deleting the sample from
 the sample sheet, or by marking the sample as `NA` in the `subset` column,
 which effectively excludes it.
 
-#### comet
+### comet
 
 In a small number of cases, Comet does not create an output file. Sometimes this
 is because Comet has not searched any spectra. If this occurs and no other error
@@ -153,7 +169,7 @@ However, it can save time and resources to simply exclude such samples from
 the workflow, whether by deleting them from the sample sheet or marking them
 as `NA` in the `subset` column.
 
-#### percolator
+### percolator
 
 In a small number of cases, Percolator may fail during the training phase. One
 way to ameliorate this issue is to group samples by `biosample`, `experiment`,
