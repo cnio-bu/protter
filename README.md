@@ -14,7 +14,7 @@ To run this pipeline, some previous steps can be performed to prepare the input 
 
 Although not required, it is recommended to use the provided `conda` environment to launch the protter pipeline, in addition to the external pre and post-processing scripts. This environment contains snakemake, as well as some of the necessary dependencies that are not contained in the pipeline's own `conda` microenvironments. (See [Dependencies](#dependencies))
 
-You need to have a version of `conda` installed. We recommend Mambaforge, which has Mamba installed in the base environment. To create it, just run inside the base folder of the protter:
+You need to have a version of `conda` installed. We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge), which has Mamba installed in the base environment. To create it, just run inside the base folder of the protter:
 ```shell
 mamba env create -f res/conf/protter-env.yaml
 ```
