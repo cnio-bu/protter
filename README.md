@@ -6,11 +6,29 @@ be local or remote (see [Data sources](#data-sources)).
 
 Allows for the easy addition of datasets and search engines.
 
-## Usage
+**Index**
+1. [Usage](#1-usage)
+    * 1.1. [Create conda enviroment](#11-create-conda-enviroment)
+    * 1.2. [Removing readthrough transcripts, PAR_Y genes and duplicates](#12-removing-readthrough-transcripts-par_y-genes-and-duplicates)
+    * 1.3. [Preparing a sample sheet](#13-preparing-a-sample-sheet)
+        - 1.3.1. [Splitting a sample sheet](#131-splitting-a-sample-sheet)
+    * 1.4. [Running the workflow](#14-running-the-workflow)
+    * 1.5. [Gathering output PSM files](#15-gathering-output-psm-files)
+    * 1.6. [Processing PSM files for APPRIS's Proteo](#16-processing-psm-files-for-appriss-proteo)
+2. [Troubleshooting](#2-troubleshooting)
+    * 2.1. [download_sample](#21-download_sample)
+    * 2.2. [raw_to_mzml](#22-raw_to_mzml)
+    * 2.3. [comet](#23-comet)
+    * 2.4. [percolator](#24-percolator)
+3. [Data sources](#3-data-sources)
+4. [Dependencies](#4-dependencies)
+
+
+## 1. Usage
 
 To run this pipeline, some previous steps can be performed to prepare the input files; and some subsequent steps to process the output files.
 
-### Create conda enviroment
+### 1.1. Create conda enviroment
 
 Although not required, it is recommended to use the provided `conda` environment to launch the protter pipeline, in addition to the external pre and post-processing scripts. This environment contains snakemake, as well as some of the necessary dependencies that are not contained in the pipeline's own `conda` microenvironments. (See [Dependencies](#dependencies))
 
@@ -24,7 +42,7 @@ And once all the dependencies have been installed, activate the environment with
 mamba activate protter
 ```
 
-### Removing readthrough transcripts, PAR_Y genes and duplicates
+### 1.2. Removing readthrough transcripts, PAR_Y genes and duplicates
 
 Sometimes it could be useful and interesting to delete the sequences tagged as 
 readthrough transcripts and the chromosome Y pseudoautosomal regions (PAR) from
@@ -44,7 +62,7 @@ have been eliminated and that the sequences that appear are unique (u). This out
 file 'gencode.v{version}.pc_translations.NoRT.u.fa.gz', is the one that should be
 indicated in the protter config.yaml file.
 
-### Preparing a sample sheet
+### 1.3. Preparing a sample sheet
 
 A TSV sample sheet is necessary to run the workflow. At a minimum, this should
 contain `dataset` and `sample` columns to identify each input sample, and a
@@ -80,7 +98,7 @@ it has the same name as the dataset and contains a working
 Whether the datasets in a sample sheet are known or unknown, it is
 recommended to review the sample sheet before running the workflow.
 
-#### $\rightarrow$ Splitting a sample sheet
+#### 1.3.1. Splitting a sample sheet
 
 It may be necessary to split a sample sheet into multiple parts, if for example,
 it would take too long to run a workflow for all the samples in a single run. In
@@ -91,7 +109,7 @@ python scripts/split_sample_sheet.py --split-by dataset "samples.tsv" "samples_"
 Depending on the configuration, this script can be used to generate several
 smaller sample sheets, which can then be processed in separate workflow runs.
 
-### Running the workflow
+### 1.4. Running the workflow
 
 The `protter` workflow can be run just like any other Snakemake workflow,
 whether by specifying the number of cores and other parameters as needed…
@@ -104,7 +122,7 @@ snakemake --use-conda --cores 1
 snakemake --use-conda --profile $SMK_PROFILE_SLURM -j 10
 ```
 
-### Gathering output PSM files
+### 1.5. Gathering output PSM files
 
 After completion of a workflow run, the output
 PSM files can be gathered as follows:
@@ -115,7 +133,7 @@ The input config YAML file is used to determine the datasets
 for which PSM files should be gathered, and the output ZIP
 archive contains all the output PSM files for those datasets.
 
-### Processing PSM files for APPRIS's Proteo
+### 1.6. Processing PSM files for APPRIS's Proteo
 
 If the protter output is going to be used as part of APPRIS it is necessary to 
 perform post-processing to obtain the final CSV file. To do this, a script has 
@@ -129,11 +147,11 @@ python scripts/postprocessing_for_proteo.py config.yaml protter_psm_output.zip
 This script creates a CSV file for each enabled database in `config.yaml` and saves 
 them in the same path that the PSMs zipped file. The files name is `proteo_{database}.csv`.
 
-## Troubleshooting
+## 2. Troubleshooting
 
 There are several steps of the workflow during which issues may arise.
 
-### download_sample
+### 2.1. download_sample
 
 When a sample download fails, it should be possible to identify the cause of
 failure from the Snakemake log files. However, sometimes a download fails simply
@@ -145,7 +163,7 @@ same dataset will be processed multiple times, it is recommended to download
 sample files separately and configure the sample sheet with their local file
 paths.
 
-### raw_to_mzml
+### 2.2. raw_to_mzml
 
 In a small number of cases, an error may occur while converting a RAW file to
 mzML format.
@@ -158,7 +176,7 @@ sample can be dropped from the workflow, either by deleting the sample from
 the sample sheet, or by marking the sample as `NA` in the `subset` column,
 which effectively excludes it.
 
-### comet
+### 2.3. comet
 
 In a small number of cases, Comet does not create an output file. Sometimes this
 is because Comet has not searched any spectra. If this occurs and no other error
@@ -169,13 +187,13 @@ However, it can save time and resources to simply exclude such samples from
 the workflow, whether by deleting them from the sample sheet or marking them
 as `NA` in the `subset` column.
 
-### percolator
+### 2.4. percolator
 
 In a small number of cases, Percolator may fail during the training phase. One
 way to ameliorate this issue is to group samples by `biosample`, `experiment`,
 or some other appropriate grouping.
 
-## Data sources
+## 3. Data sources
 
 Input mass spectrometry data may be obtained from files stored locally,
 or may be downloaded directly from the
@@ -183,7 +201,7 @@ or may be downloaded directly from the
 ([Perez-Riverol et al. 2019](https://doi.org/10.1093/nar/gky1106))
 by specifying one or more PRIDE project accessions.
 
-## Dependencies
+## 4. Dependencies
 
 This workflow requires Python 3.6 or greater.
 
